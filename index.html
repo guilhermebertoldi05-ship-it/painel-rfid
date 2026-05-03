@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Evasão RFID — São Geraldo</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2235;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #ff4d6d;
+    --accent3: #00ff9d;
+    --text: #e8eef7;
+    --text-muted: #6b7fa3;
+    --warning: #ffb347;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* BACKGROUND GRID */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* HEADER */
+  header {
+    position: relative;
+    z-index: 10;
+    padding: 32px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(180deg, rgba(0,212,255,0.05) 0%, transparent 100%);
+  }
+
+  .header-left h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+
+  .header-left h1 span {
+    color: var(--accent);
+  }
+
+  .header-left p {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .status-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 100px;
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent3);
+    box-shadow: 0 0 8px var(--accent3);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* TABS */
+  .tabs {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    gap: 4px;
+    padding: 20px 40px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .tab {
+    padding: 12px 24px;
+    font-family: 'Syne', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    cursor: pointer;
+    border: 1px solid transparent;
+    border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    background: transparent;
+    transition: all 0.2s;
+    position: relative;
+    bottom: -1px;
+  }
+
+  .tab:hover { color: var(--text); background: var(--surface); }
+
+  .tab.active {
+    color: var(--accent);
+    background: var(--surface);
+    border-color: var(--border);
+    border-bottom-color: var(--surface);
+  }
+
+  /* MAIN */
+  main {
+    position: relative;
+    z-index: 10;
+    padding: 32px 40px;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* CARDS GRID */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover { border-color: var(--accent); }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), transparent);
+  }
+
+  .card.red::before { background: linear-gradient(90deg, var(--accent2), transparent); }
+  .card.green::before { background: linear-gradient(90deg, var(--accent3), transparent); }
+  .card.yellow::before { background: linear-gradient(90deg, var(--warning), transparent); }
+
+  .card-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+  }
+
+  .card-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .card-value.accent { color: var(--accent); }
+  .card-value.red { color: var(--accent2); }
+  .card-value.green { color: var(--accent3); }
+  .card-value.yellow { color: var(--warning); }
+
+  .card-sub {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-top: 8px;
+  }
+
+  /* CHART CONTAINERS */
+  .charts-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+
+  .chart-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+  }
+
+  .chart-box.full { grid-column: 1 / -1; }
+
+  .chart-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+  }
+
+  .chart-sub {
+    font-size: 10px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+  }
+
+  .chart-wrap {
+    position: relative;
+    height: 220px;
+  }
+
+  /* FILTER BAR */
+  .filter-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .filter-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  select {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    outline: none;
+    min-width: 280px;
+    transition: border-color 0.2s;
+  }
+
+  select:focus { border-color: var(--accent); }
+
+  /* TABLE */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  thead tr {
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+
+  th {
+    padding: 14px 16px;
+    text-align: left;
+    font-family: 'Syne', sans-serif;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+
+  td {
+    padding: 14px 16px;
+    color: var(--text);
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 100px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-red { background: rgba(255,77,109,0.15); color: var(--accent2); border: 1px solid rgba(255,77,109,0.3); }
+  .badge-green { background: rgba(0,255,157,0.1); color: var(--accent3); border: 1px solid rgba(0,255,157,0.2); }
+  .badge-yellow { background: rgba(255,179,71,0.1); color: var(--warning); border: 1px solid rgba(255,179,71,0.2); }
+  .badge-blue { background: rgba(0,212,255,0.1); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+
+  /* CLIENT DETAIL */
+  .client-detail {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  /* LOADING */
+  #loading {
+    position: fixed;
+    inset: 0;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    gap: 16px;
+  }
+
+  .loader-text {
+    font-family: 'Syne', sans-serif;
+    font-size: 14px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+  }
+
+  .loader-bar {
+    width: 200px;
+    height: 2px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .loader-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    animation: load 1.5s ease-in-out infinite;
+  }
+
+  @keyframes load {
+    0% { width: 0%; margin-left: 0; }
+    50% { width: 60%; margin-left: 20%; }
+    100% { width: 0%; margin-left: 100%; }
+  }
+
+  .empty-state {
+    padding: 48px;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 12px;
+    letter-spacing: 1px;
+  }
+
+  /* RONDAS STATUS */
+  .ronda-ok { color: var(--accent3); }
+  .ronda-warn { color: var(--warning); }
+  .ronda-bad { color: var(--accent2); }
+
+  @media (max-width: 768px) {
+    header { padding: 20px; flex-direction: column; gap: 12px; }
+    .tabs { padding: 16px 20px 0; }
+    main { padding: 20px; }
+    .cards-grid { grid-template-columns: 1fr; }
+    .charts-row { grid-template-columns: 1fr; }
+    .client-detail { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="loader-text">Carregando dados</div>
+  <div class="loader-bar"><div class="loader-fill"></div></div>
+</div>
+
+<header>
+  <div class="header-left">
+    <h1>Painel de Evasão <span>RFID</span> — São Geraldo</h1>
+    <p>Sistema de monitoramento de enxovais hospitalares</p>
+  </div>
+  <div class="header-right">
+    <div class="status-pill">
+      <div class="status-dot"></div>
+      <span id="ultima-atualizacao">Carregando...</span>
+    </div>
+  </div>
+</header>
+
+<div class="tabs">
+  <button class="tab active" onclick="showTab('visao-geral')">Visão Geral</button>
+  <button class="tab" onclick="showTab('por-cliente')">Por Cliente</button>
+  <button class="tab" onclick="showTab('rondas')">Fiscalização Rondas</button>
+</div>
+
+<main>
+
+  <!-- VISÃO GERAL -->
+  <div id="visao-geral" class="tab-content active">
+    <div class="cards-grid" id="cards-geral"></div>
+    <div class="charts-row">
+      <div class="chart-box">
+        <div class="chart-title">Evasão Média (%)</div>
+        <div class="chart-sub">Evolução mensal</div>
+        <div class="chart-wrap"><canvas id="chart-evasao"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Perda Financeira (R$)</div>
+        <div class="chart-sub">Evolução mensal</div>
+        <div class="chart-wrap"><canvas id="chart-financeiro"></canvas></div>
+      </div>
+      <div class="chart-box full">
+        <div class="chart-title">Total de Peças Evadidas</div>
+        <div class="chart-sub">Evolução mensal</div>
+        <div class="chart-wrap"><canvas id="chart-pecas"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- POR CLIENTE -->
+  <div id="por-cliente" class="tab-content">
+    <div class="filter-bar">
+      <span class="filter-label">Cliente</span>
+      <select id="select-cliente" onchange="renderCliente()">
+        <option value="">Selecione um cliente...</option>
+      </select>
+    </div>
+    <div class="client-detail" id="client-cards"></div>
+    <div class="charts-row" id="client-charts" style="display:none">
+      <div class="chart-box">
+        <div class="chart-title">Evasão (%)</div>
+        <div class="chart-sub">Histórico do cliente</div>
+        <div class="chart-wrap"><canvas id="chart-cli-evasao"></canvas></div>
+      </div>
+      <div class="chart-box">
+        <div class="chart-title">Perda Financeira (R$)</div>
+        <div class="chart-sub">Histórico do cliente</div>
+        <div class="chart-wrap"><canvas id="chart-cli-fin"></canvas></div>
+      </div>
+    </div>
+    <div class="table-wrap" id="client-table-wrap" style="display:none">
+      <table>
+        <thead>
+          <tr>
+            <th>Mês</th>
+            <th>Inventário</th>
+            <th>Peças Evadidas</th>
+            <th>% Evasão</th>
+            <th>Perda (R$)</th>
+            <th>1º Pior Setor</th>
+            <th>2º Pior Setor</th>
+            <th>3º Pior Setor</th>
+          </tr>
+        </thead>
+        <tbody id="client-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- RONDAS -->
+  <div id="rondas" class="tab-content">
+    <div class="filter-bar">
+      <span class="filter-label">Mês</span>
+      <select id="select-mes-ronda" onchange="renderRondas()">
+        <option value="">Todos os meses</option>
+      </select>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Mês</th>
+            <th>Status Última Ronda</th>
+            <th>Eficiência</th>
+            <th>Dias de Atraso</th>
+            <th>Situação</th>
+          </tr>
+        </thead>
+        <tbody id="rondas-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</main>
+
+<script>
+const SHEET_ID = '2PACX-1vTU9hUjM3qXPi08-gAAlnuOBqPtABLmrYJaJ1TrOx8J12YFoqdJXGukVptHxxqd84prEoeVTCNejfUy';
+const BASE_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?output=csv&gid=`;
+
+// GIDs das abas — precisamos descobrir via fetch
+const ABAS = {
+  'Visão_Geral': null,
+  'Por_Cliente': null,
+  'Rondas': null
+};
+
+let dadosGeral = [];
+let dadosCliente = [];
+let dadosRondas = [];
+let chartEvasao, chartFin, chartPecas, chartCliEvasao, chartCliFin;
+
+async function fetchCSV(url) {
+  const r = await fetch(url);
+  const txt = await r.text();
+  const lines = txt.trim().split('\n');
+  const headers = parseCSVLine(lines[0]);
+  return lines.slice(1).map(l => {
+    const vals = parseCSVLine(l);
+    const obj = {};
+    headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+    return obj;
+  }).filter(r => Object.values(r).some(v => v));
+}
+
+function parseCSVLine(line) {
+  const result = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === '"') { inQuotes = !inQuotes; }
+    else if (line[i] === ',' && !inQuotes) { result.push(current); current = ''; }
+    else { current += line[i]; }
+  }
+  result.push(current);
+  return result;
+}
+
+function toNum(v) {
+  if (!v) return 0;
+  const s = String(v).replace(/[^\d,.-]/g, '').replace(/\.(?=\d{3})/g, '').replace(',', '.');
+  return parseFloat(s) || 0;
+}
+
+function fmtMoney(v) {
+  return 'R$ ' + toNum(v).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function fmtNum(v) {
+  return toNum(v).toLocaleString('pt-BR');
+}
+
+function fmtPct(v) {
+  return toNum(v).toFixed(2).replace('.', ',') + '%';
+}
+
+function fmtMes(v) {
+  if (!v) return v;
+  const [ano, mes] = v.split('-');
+  const nomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return (nomes[parseInt(mes)-1] || mes) + '/' + String(ano).slice(-2);
+}
+
+function makeChart(id, type, labels, datasets, opts = {}) {
+  const ctx = document.getElementById(id);
+  if (!ctx) return null;
+  return new Chart(ctx, {
+    type,
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: datasets.length > 1, labels: { color: '#6b7fa3', font: { family: 'DM Mono', size: 11 } } },
+        tooltip: { backgroundColor: '#1a2235', titleColor: '#e8eef7', bodyColor: '#6b7fa3', borderColor: '#1e2d45', borderWidth: 1 }
+      },
+      scales: {
+        x: { ticks: { color: '#6b7fa3', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1e2d45' } },
+        y: { ticks: { color: '#6b7fa3', font: { family: 'DM Mono', size: 10 } }, grid: { color: '#1e2d45' } }
+      },
+      ...opts
+    }
+  });
+}
+
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+function renderVisaoGeral() {
+  if (!dadosGeral.length) return;
+
+  const ultimo = dadosGeral[dadosGeral.length - 1];
+  const cards = document.getElementById('cards-geral');
+
+  const evasao = toNum(ultimo['% Evasão Média']);
+  const pecas = toNum(ultimo['Total Peças Evadidas']);
+  const financeiro = toNum(ultimo['Total Perda Financeira (R$)']);
+  const nClientes = toNum(ultimo['Nº Clientes']);
+
+  const corEvasao = evasao > 3 ? 'red' : evasao > 1.5 ? 'yellow' : 'green';
+
+  cards.innerHTML = `
+    <div class="card ${corEvasao}">
+      <div class="card-label">% Evasão Média — ${fmtMes(ultimo['Mês'])}</div>
+      <div class="card-value ${corEvasao}">${fmtPct(evasao)}</div>
+      <div class="card-sub">Média entre ${nClientes} cliente(s)</div>
+    </div>
+    <div class="card red">
+      <div class="card-label">Total Peças Evadidas</div>
+      <div class="card-value red">${fmtNum(pecas)}</div>
+      <div class="card-sub">Somatório do mês atual</div>
+    </div>
+    <div class="card yellow">
+      <div class="card-label">Perda Financeira Total</div>
+      <div class="card-value yellow">${fmtMoney(financeiro)}</div>
+      <div class="card-sub">Somatório do mês atual</div>
+    </div>
+  `;
+
+  const labels = dadosGeral.map(d => fmtMes(d['Mês']));
+
+  if (chartEvasao) chartEvasao.destroy();
+  chartEvasao = makeChart('chart-evasao', 'line', labels, [{
+    label: '% Evasão',
+    data: dadosGeral.map(d => toNum(d['% Evasão Média'])),
+    borderColor: '#ff4d6d',
+    backgroundColor: 'rgba(255,77,109,0.1)',
+    tension: 0.4,
+    fill: true,
+    pointBackgroundColor: '#ff4d6d',
+    pointRadius: 4
+  }]);
+
+  if (chartFin) chartFin.destroy();
+  chartFin = makeChart('chart-financeiro', 'bar', labels, [{
+    label: 'R$',
+    data: dadosGeral.map(d => toNum(d['Total Perda Financeira (R$)'])),
+    backgroundColor: 'rgba(255,179,71,0.7)',
+    borderColor: '#ffb347',
+    borderWidth: 1,
+    borderRadius: 4
+  }]);
+
+  if (chartPecas) chartPecas.destroy();
+  chartPecas = makeChart('chart-pecas', 'line', labels, [{
+    label: 'Peças',
+    data: dadosGeral.map(d => toNum(d['Total Peças Evadidas'])),
+    borderColor: '#00d4ff',
+    backgroundColor: 'rgba(0,212,255,0.08)',
+    tension: 0.4,
+    fill: true,
+    pointBackgroundColor: '#00d4ff',
+    pointRadius: 4
+  }]);
+}
+
+function renderSelectCliente() {
+  const sel = document.getElementById('select-cliente');
+  const clientes = [...new Set(dadosCliente.map(d => d['Cliente']))].sort();
+  clientes.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    sel.appendChild(opt);
+  });
+}
+
+function renderCliente() {
+  const cliente = document.getElementById('select-cliente').value;
+  if (!cliente) return;
+
+  const dados = dadosCliente.filter(d => d['Cliente'] === cliente).sort((a,b) => a['Ano-Mês'].localeCompare(b['Ano-Mês']));
+  if (!dados.length) return;
+
+  const ultimo = dados[dados.length - 1];
+  const cards = document.getElementById('client-cards');
+  const evasao = toNum(ultimo['% Evasão']);
+  const corEvasao = evasao > 3 ? 'red' : evasao > 1.5 ? 'yellow' : 'green';
+
+  cards.innerHTML = `
+    <div class="card ${corEvasao}">
+      <div class="card-label">% Evasão — ${fmtMes(ultimo['Ano-Mês'])}</div>
+      <div class="card-value ${corEvasao}">${fmtPct(evasao)}</div>
+      <div class="card-sub">Mês mais recente</div>
+    </div>
+    <div class="card red">
+      <div class="card-label">Peças Evadidas</div>
+      <div class="card-value red">${fmtNum(ultimo['Peças Evadidas'])}</div>
+      <div class="card-sub">de ${fmtNum(ultimo['Inventário'])} no inventário</div>
+    </div>
+    <div class="card yellow">
+      <div class="card-label">Perda Financeira</div>
+      <div class="card-value yellow" style="font-size:24px">${fmtMoney(toNum(ultimo['Perda Financeira (R$)']))}</div>
+      <div class="card-sub">Mês mais recente</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Piores Setores</div>
+      <div style="margin-top:8px; display:flex; flex-direction:column; gap:6px">
+        ${[ultimo['1º Pior Setor'], ultimo['2º Pior Setor'], ultimo['3º Pior Setor']].filter(s => s && s !== '-').map((s,i) => `<span class="badge badge-red">${i+1}º ${s}</span>`).join('')}
+      </div>
+    </div>
+  `;
+
+  const labels = dados.map(d => fmtMes(d['Ano-Mês']));
+  document.getElementById('client-charts').style.display = 'grid';
+  document.getElementById('client-table-wrap').style.display = 'block';
+
+  if (chartCliEvasao) chartCliEvasao.destroy();
+  chartCliEvasao = makeChart('chart-cli-evasao', 'line', labels, [{
+    data: dados.map(d => toNum(d['% Evasão'])),
+    borderColor: '#ff4d6d',
+    backgroundColor: 'rgba(255,77,109,0.1)',
+    tension: 0.4, fill: true,
+    pointBackgroundColor: '#ff4d6d', pointRadius: 5
+  }]);
+
+  if (chartCliFin) chartCliFin.destroy();
+  chartCliFin = makeChart('chart-cli-fin', 'bar', labels, [{
+    data: dados.map(d => toNum(d['Perda Financeira (R$)'])),
+    backgroundColor: 'rgba(255,179,71,0.7)',
+    borderColor: '#ffb347', borderWidth: 1, borderRadius: 4
+  }]);
+
+  const tbody = document.getElementById('client-tbody');
+  tbody.innerHTML = dados.reverse().map(d => `
+    <tr>
+      <td>${fmtMes(d['Ano-Mês'])}</td>
+      <td>${fmtNum(d['Inventário'])}</td>
+      <td>${fmtNum(d['Peças Evadidas'])}</td>
+      <td><span class="badge ${toNum(d['% Evasão']) > 3 ? 'badge-red' : toNum(d['% Evasão']) > 1.5 ? 'badge-yellow' : 'badge-green'}">${fmtPct(toNum(d['% Evasão']))}</span></td>
+      <td>${fmtMoney(toNum(d['Perda Financeira (R$)']))}</td>
+      <td>${d['1º Pior Setor'] || '-'}</td>
+      <td>${d['2º Pior Setor'] || '-'}</td>
+      <td>${d['3º Pior Setor'] || '-'}</td>
+    </tr>
+  `).join('');
+}
+
+function renderSelectMesRonda() {
+  const sel = document.getElementById('select-mes-ronda');
+  const meses = [...new Set(dadosRondas.map(d => d['Ano-Mês']))].sort();
+  meses.forEach(m => {
+    const opt = document.createElement('option');
+    opt.value = m;
+    opt.textContent = fmtMes(m);
+    sel.appendChild(opt);
+  });
+  if (meses.length) sel.value = meses[meses.length - 1];
+}
+
+function renderRondas() {
+  const mes = document.getElementById('select-mes-ronda').value;
+  const dados = (mes ? dadosRondas.filter(d => d['Ano-Mês'] === mes) : dadosRondas)
+    .sort((a,b) => toNum(b['Dias de Atraso (Núm)']) - toNum(a['Dias de Atraso (Núm)']));
+
+  const tbody = document.getElementById('rondas-tbody');
+
+  if (!dados.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum dado encontrado</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = dados.map(d => {
+    const dias = toNum(d['Dias de Atraso (Núm)']);
+    const efic = toNum(d['% Eficiência (Núm)']);
+    const status = d['Status Última Ronda'] || '-';
+    const semRonda = status.includes('Sem ronda') || status === 'Sem dados';
+
+    let situacao, badgeClass;
+    if (semRonda) {
+      situacao = 'Sem Ronda'; badgeClass = 'badge-red';
+    } else if (dias > 30) {
+      situacao = 'Atrasada'; badgeClass = 'badge-red';
+    } else if (dias > 14 || efic < 70) {
+      situacao = 'Atenção'; badgeClass = 'badge-yellow';
+    } else {
+      situacao = 'Regular'; badgeClass = 'badge-green';
+    }
+
+    const corDias = dias > 30 ? 'ronda-bad' : dias > 14 ? 'ronda-warn' : 'ronda-ok';
+    const corEfic = efic < 70 ? 'ronda-bad' : efic < 85 ? 'ronda-warn' : 'ronda-ok';
+
+    return `
+      <tr>
+        <td>${d['Cliente']}</td>
+        <td>${fmtMes(d['Ano-Mês'])}</td>
+        <td style="font-size:11px">${status}</td>
+        <td><span class="${corEfic}">${d['Eficiência da Ronda'] || '-'}</span></td>
+        <td><span class="${corDias}">${dias} dias</span></td>
+        <td><span class="badge ${badgeClass}">${situacao}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
+async function init() {
+  try {
+    // Fetch all three sheets using known GID pattern
+    // We'll try common GIDs and let the URL resolve
+    const urlGeral = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?gid=0&single=true&output=csv`;
+
+    // Fetch main page to find GIDs
+    const mainUrl = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pubhtml`;
+    const mainR = await fetch(mainUrl);
+    const mainTxt = await mainR.text();
+
+    // Extract GIDs from the HTML
+    const gidMatches = [...mainTxt.matchAll(/gid=(\d+)/g)].map(m => m[1]);
+    const sheetNameMatches = [...mainTxt.matchAll(/<li[^>]*gid="(\d+)"[^>]*>([^<]+)</g)];
+
+    // Build GID map from sheet names in HTML
+    const gidMap = {};
+    const nameGidPattern = /name="([^"]+)"[^>]*gid="(\d+)"|gid="(\d+)"[^>]*name="([^"]+)"/g;
+    let m;
+    while ((m = nameGidPattern.exec(mainTxt)) !== null) {
+      const name = m[1] || m[4];
+      const gid = m[2] || m[3];
+      if (name && gid) gidMap[name] = gid;
+    }
+
+    // Alternative: try to find sheet tabs
+    const tabPattern = /\\"name\\":\\"([^"]+)\\",\\"gid\\":(\d+)/g;
+    while ((m = tabPattern.exec(mainTxt)) !== null) {
+      gidMap[m[1]] = m[2];
+    }
+
+    // Try another pattern
+    const tabPattern2 = /"name":"([^"]+)","gid":(\d+)/g;
+    while ((m = tabPattern2.exec(mainTxt)) !== null) {
+      gidMap[m[1]] = m[2];
+    }
+
+    // Fallback: try sequential GIDs
+    const possibleGids = [...new Set(['0', '1', '2', '3', '4', '5', ...gidMatches])];
+
+    // Try to fetch each possible GID and find our sheets
+    const sheetData = {};
+    for (const gid of possibleGids.slice(0, 10)) {
+      try {
+        const url = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?gid=${gid}&single=true&output=csv`;
+        const r = await fetch(url);
+        if (!r.ok) continue;
+        const txt = await r.text();
+        const firstLine = txt.split('\n')[0];
+
+        if (firstLine.includes('Mês') && firstLine.includes('Evasão Média')) {
+          sheetData['Visão_Geral'] = txt;
+        } else if (firstLine.includes('Cliente') && firstLine.includes('Inventário') && firstLine.includes('Pior Setor')) {
+          sheetData['Por_Cliente'] = txt;
+        } else if (firstLine.includes('Eficiência da Ronda') || firstLine.includes('Status Última')) {
+          sheetData['Rondas'] = txt;
+        }
+      } catch(e) {}
+    }
+
+    function parseCSVText(txt) {
+      const lines = txt.trim().split('\n');
+      const headers = parseCSVLine(lines[0]);
+      return lines.slice(1).map(l => {
+        const vals = parseCSVLine(l);
+        const obj = {};
+        headers.forEach((h, i) => obj[h.trim()] = (vals[i] || '').trim());
+        return obj;
+      }).filter(r => Object.values(r).some(v => v));
+    }
+
+    if (sheetData['Visão_Geral']) dadosGeral = parseCSVText(sheetData['Visão_Geral']);
+    if (sheetData['Por_Cliente']) dadosCliente = parseCSVText(sheetData['Por_Cliente']);
+    if (sheetData['Rondas']) dadosRondas = parseCSVText(sheetData['Rondas']);
+
+    // Update last update time
+    if (dadosCliente.length) {
+      const datas = dadosCliente.map(d => d['Data Extração'] || '').filter(Boolean);
+      if (datas.length) document.getElementById('ultima-atualizacao').textContent = 'Atualizado: ' + datas[datas.length-1];
+    }
+
+    renderVisaoGeral();
+    renderSelectCliente();
+    renderSelectMesRonda();
+    renderRondas();
+
+    document.getElementById('loading').style.display = 'none';
+
+  } catch(e) {
+    console.error(e);
+    document.getElementById('loading').innerHTML = `
+      <div class="loader-text" style="color:#ff4d6d">Erro ao carregar dados</div>
+      <div style="color:#6b7fa3; font-size:12px; margin-top:8px">${e.message}</div>
+    `;
+  }
+}
+
+init();
+</script>
+</body>
+</html>
