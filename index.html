@@ -214,19 +214,10 @@
         <thead><tr><th>Mês</th><th>Inventário</th><th>Peças Evadidas</th><th>% Evasão</th><th>Perda (R$)</th><th>1º Pior Setor</th><th>2º Pior Setor</th><th>3º Pior Setor</th></tr></thead>
         <tbody id="client-tbody"></tbody>
       </table>
-    </div>
   </div>
   <!-- RONDAS -->
   <div id="rondas" class="tab-content">
     <div id="mes-ronda-indicator" class="mes-indicator"><span></span> Período de referência: carregando...</div>
-    <div class="section-header" style="margin-top:24px"><h2>Eficiência por Dia da Semana</h2><div class="line"></div></div>
-    <div class="semana-wrap">
-      <table id="tabela-semana">
-        <thead><tr id="semana-header"></tr></thead>
-        <tbody id="semana-tbody"></tbody>
-      </table>
-    </div>
-    <div class="section-header"><h2>Detalhamento por Cliente</h2><div class="line"></div></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Cliente</th><th>Última Ronda</th><th>Eficiência</th><th>Dias sem Ronda</th><th>Situação</th></tr></thead>
@@ -462,6 +453,8 @@ function renderCliente() {
   const labels = dados.map(d => fmtMes(d['Ano-Mês']));
   document.getElementById('client-charts').style.display = 'grid';
   document.getElementById('client-table-wrap').style.display = 'block';
+  document.getElementById('semana-cliente-wrap').style.display = 'block';
+  renderRondasSemanaCliente(cliente);
   if (chartCliEvasao) chartCliEvasao.destroy();
   chartCliEvasao = makeChart('chart-cli-evasao', 'line', labels, [{ data: dados.map(d => toNum(d['% Evasão'])), borderColor: '#1a6fb5', backgroundColor: 'rgba(26,111,181,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#1a6fb5', pointRadius: 5 }]);
   if (chartCliFin) chartCliFin.destroy();
@@ -472,6 +465,35 @@ function renderCliente() {
   }).join('');
 }
 
+
+function renderRondasSemanaCliente(cliente) {
+  if (!dadosRondasSemana.length) return;
+  const row = dadosRondasSemana.find(d => d['Cliente'] === cliente);
+  const header = document.getElementById('semana-header');
+  const tbody = document.getElementById('semana-tbody');
+  if (!header || !tbody) return;
+
+  const colunas = Object.keys(dadosRondasSemana[0]).filter(k => k !== 'Cliente');
+
+  header.innerHTML = '<th style="text-align:left">Cliente</th>' + colunas.map(d => {
+    const dia = diaSemana(d);
+    const dd = d.substring(0,5);
+    return `<th>${dia}<br><span style="font-weight:500;opacity:0.8;font-size:9px">${dd}</span></th>`;
+  }).join('');
+
+  if (!row) {
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sem dados semanais para este cliente</td></tr>';
+    return;
+  }
+
+  const cells = colunas.map(d => {
+    const val = row[d] || '-';
+    const cls = corEficDia(val);
+    const display = val === '-' ? '—' : val;
+    return `<td><span class="${cls}">${display}</span></td>`;
+  }).join('');
+  tbody.innerHTML = `<tr><td style="text-align:left"><strong>${row['Cliente']}</strong></td>${cells}</tr>`;
+}
 
 function corEficDia(val) {
   if (val === '-' || val === '') return 'efic-dia-vazio';
@@ -569,7 +591,6 @@ async function init() {
     renderRankings();
     renderSelectCliente();
     renderRondas();
-    renderRondasSemana();
     document.getElementById('loading').style.display = 'none';
   } catch(e) {
     document.getElementById('loading').innerHTML = `<div style="color:#e53935;font-family:Montserrat;font-size:14px;font-weight:700;letter-spacing:2px">ERRO AO CARREGAR DADOS</div><div style="color:#5a7a96;font-size:12px;margin-top:8px">${e.message}</div>`;
