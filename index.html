@@ -124,6 +124,14 @@
   .ranking-pos.pn { background: var(--blue-light); color: var(--blue); }
   .ranking-nome { flex: 1; font-size: 12px; font-weight: 600; color: var(--text); }
   .ranking-val { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; }
+
+  .semana-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 24px; }
+  .semana-wrap table th { background: linear-gradient(135deg, var(--blue-dark), var(--blue)); color: rgba(255,255,255,0.9); }
+  .efic-dia-vermelho { background: #fdecea; color: var(--red); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
+  .efic-dia-laranja { background: #fff3ed; color: var(--orange); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
+  .efic-dia-amarelo { background: var(--yellow-light); color: var(--yellow); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
+  .efic-dia-verde { background: var(--green-light); color: var(--green); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
+  .efic-dia-vazio { background: #f0f4f8; color: var(--text-muted); font-weight: 500; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
   @media (max-width: 768px) {
     header { padding: 0 20px; } .tabs { padding: 0 20px; } main { padding: 20px; }
     .cards-grid { grid-template-columns: 1fr; } .charts-row { grid-template-columns: 1fr; } .client-detail { grid-template-columns: repeat(2, 1fr); }
@@ -211,6 +219,14 @@
   <!-- RONDAS -->
   <div id="rondas" class="tab-content">
     <div id="mes-ronda-indicator" class="mes-indicator"><span></span> Período de referência: carregando...</div>
+    <div class="section-header" style="margin-top:24px"><h2>Eficiência por Dia da Semana</h2><div class="line"></div></div>
+    <div class="semana-wrap">
+      <table id="tabela-semana">
+        <thead><tr id="semana-header"></tr></thead>
+        <tbody id="semana-tbody"></tbody>
+      </table>
+    </div>
+    <div class="section-header"><h2>Detalhamento por Cliente</h2><div class="line"></div></div>
     <div class="table-wrap">
       <table>
         <thead><tr><th>Cliente</th><th>Última Ronda</th><th>Eficiência</th><th>Dias sem Ronda</th><th>Situação</th></tr></thead>
@@ -221,9 +237,9 @@
 </main>
 <script>
 const SHEET_ID = '2PACX-1vTU9hUjM3qXPi08-gAAlnuOBqPtABLmrYJaJ1TrOx8J12YFoqdJXGukVptHxxqd84prEoeVTCNejfUy';
-const GIDS = { 'Visão_Geral': '211713039', 'Por_Cliente': '1630187568', 'Rondas': '1562548530' };
+const GIDS = { 'Visão_Geral': '211713039', 'Por_Cliente': '1630187568', 'Rondas': '1562548530', 'Rondas_Semana': '329455742' };
 const BASE_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?output=csv&gid=`;
-let dadosGeral = [], dadosCliente = [], dadosRondas = [];
+let dadosGeral = [], dadosCliente = [], dadosRondas = [], dadosRondasSemana = [];
 let chartEvasao, chartFin, chartPecas, chartCliEvasao, chartCliFin;
 
 function parseCSVLine(line) {
@@ -456,6 +472,54 @@ function renderCliente() {
   }).join('');
 }
 
+
+function corEficDia(val) {
+  if (val === '-' || val === '') return 'efic-dia-vazio';
+  if (val === 'S/ Equip') return 'efic-dia-verde';
+  const m = val.match(/^([\d.]+)%/);
+  if (!m) return 'efic-dia-vazio';
+  const v = parseFloat(m[1]);
+  if (v === 0) return 'efic-dia-vazio';
+  if (v <= 40) return 'efic-dia-vermelho';
+  if (v <= 60) return 'efic-dia-laranja';
+  if (v <= 80) return 'efic-dia-amarelo';
+  return 'efic-dia-verde';
+}
+
+function diaSemana(dataStr) {
+  // dataStr = "27/04/2026"
+  const [d, m, a] = dataStr.split('/');
+  const dt = new Date(parseInt(a), parseInt(m)-1, parseInt(d));
+  const nomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  return nomes[dt.getDay()];
+}
+
+function renderRondasSemana() {
+  if (!dadosRondasSemana.length) return;
+  const header = document.getElementById('semana-header');
+  const tbody = document.getElementById('semana-tbody');
+  if (!header || !tbody) return;
+
+  // Pega cabeçalhos (datas) — primeira linha é o header
+  const colunas = Object.keys(dadosRondasSemana[0]).filter(k => k !== 'Cliente');
+
+  header.innerHTML = '<th style="text-align:left">Cliente</th>' + colunas.map(d => {
+    const dia = diaSemana(d);
+    const dd = d.substring(0,5); // DD/MM
+    return `<th>${dia}<br><span style="font-weight:500;opacity:0.8;font-size:9px">${dd}</span></th>`;
+  }).join('');
+
+  tbody.innerHTML = dadosRondasSemana.map(row => {
+    const cells = colunas.map(d => {
+      const val = row[d] || '-';
+      const cls = corEficDia(val);
+      const display = val === '-' ? '—' : val;
+      return `<td><span class="${cls}">${display}</span></td>`;
+    }).join('');
+    return `<tr><td style="text-align:left"><strong>${row['Cliente']}</strong></td>${cells}</tr>`;
+  }).join('');
+}
+
 function renderRondas() {
   const meses = [...new Set(dadosRondas.map(d => d['Ano-Mês']))].sort();
   const mesAtual = meses[meses.length - 1];
@@ -487,14 +551,16 @@ function renderRondas() {
 
 async function init() {
   try {
-    const [txtGeral, txtCliente, txtRondas] = await Promise.all([
+    const [txtGeral, txtCliente, txtRondas, txtSemana] = await Promise.all([
       fetch(`${BASE_URL}${GIDS['Visão_Geral']}`).then(r => r.text()),
       fetch(`${BASE_URL}${GIDS['Por_Cliente']}`).then(r => r.text()),
       fetch(`${BASE_URL}${GIDS['Rondas']}`).then(r => r.text()),
+      fetch(`${BASE_URL}${GIDS['Rondas_Semana']}`).then(r => r.text()),
     ]);
     dadosGeral = parseCSVText(txtGeral);
     dadosCliente = parseCSVText(txtCliente);
     dadosRondas = parseCSVText(txtRondas);
+    dadosRondasSemana = parseCSVText(txtSemana);
     if (dadosCliente.length) {
       const datas = dadosCliente.map(d => d['Data Extração'] || '').filter(Boolean);
       if (datas.length) document.getElementById('ultima-atualizacao').textContent = '🔄 ' + datas[datas.length-1];
@@ -503,6 +569,7 @@ async function init() {
     renderRankings();
     renderSelectCliente();
     renderRondas();
+    renderRondasSemana();
     document.getElementById('loading').style.display = 'none';
   } catch(e) {
     document.getElementById('loading').innerHTML = `<div style="color:#e53935;font-family:Montserrat;font-size:14px;font-weight:700;letter-spacing:2px">ERRO AO CARREGAR DADOS</div><div style="color:#5a7a96;font-size:12px;margin-top:8px">${e.message}</div>`;
