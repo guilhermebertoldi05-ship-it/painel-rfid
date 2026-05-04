@@ -81,7 +81,8 @@
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.15s; }
   tbody tr:last-child { border-bottom: none; }
   tbody tr:hover { background: var(--blue-light); }
-  td { padding: 13px 16px; color: var(--text); font-weight: 500; }
+  td { padding: 13px 16px; color: var(--text); font-weight: 500; text-align: center; }
+  td:first-child { text-align: left; }
   .badge { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 100px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; }
   .badge-red { background: var(--red-light); color: var(--red); }
   .badge-green { background: var(--green-light); color: var(--green); }
@@ -391,8 +392,12 @@ function renderRondas() {
     const semRonda = status.includes('Sem ronda') || status === 'Sem dados' || status === '-';
     let statusFormatado = 'S/ Ronda no período';
     if (!semRonda) {
-      const match = status.match(/(\d{2})\/(\d{2})\/\d{4}/);
-      statusFormatado = match ? `${match[1]}/${match[2]}` : status;
+      const match = status.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+      if (match) {
+        const diasSemana = ['domingo','segunda-feira','ter\u00e7a-feira','quarta-feira','quinta-feira','sexta-feira','s\u00e1bado'];
+        const dt = new Date(parseInt(match[3]), parseInt(match[2])-1, parseInt(match[1]));
+        statusFormatado = match[1] + '/' + match[2] + ' (' + diasSemana[dt.getDay()] + ')';
+      } else { statusFormatado = status; }
     }
     const diasTexto = dias >= 60 ? '+60 dias' : `${dias} dias`;
     const situacao = badgeSituacao(dias);
