@@ -47,7 +47,7 @@
   .tab-content { display: none; }
   .tab-content.active { display: block; }
   .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
-  .section-header h2 { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; }
+  .section-header h2 { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; color: var(--text-muted); letter-spacing: 2px; text-transform: uppercase; white-space: nowrap; }
   .section-header .line { flex: 1; height: 1px; background: var(--border); }
   .cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
   .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px 28px; position: relative; overflow: hidden; box-shadow: var(--shadow); transition: box-shadow 0.2s, transform 0.2s; }
@@ -72,7 +72,7 @@
   .chart-wrap { position: relative; height: 220px; }
   .filter-bar { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; box-shadow: var(--shadow); }
   .filter-label { font-size: 11px; color: var(--text-muted); letter-spacing: 1.2px; text-transform: uppercase; font-weight: 700; white-space: nowrap; }
-  select { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 14px; cursor: pointer; outline: none; min-width: 300px; transition: border-color 0.2s; }
+  select { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 14px; cursor: pointer; outline: none; min-width: 260px; transition: border-color 0.2s; }
   select:focus { border-color: var(--blue); }
   .table-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
@@ -91,7 +91,7 @@
   .badge-gray { background: #f0f4f8; color: var(--text-muted); }
   .client-detail { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
   .mes-indicator { display: inline-flex; align-items: center; gap: 8px; background: var(--blue-light); border: 1px solid rgba(26,111,181,0.2); border-radius: 100px; padding: 8px 18px; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700; color: var(--blue); letter-spacing: 0.5px; margin-bottom: 20px; }
-  .mes-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); }
+  .mes-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
   #loading { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; gap: 20px; }
   .loader-text { font-family: 'Montserrat', sans-serif; font-size: 13px; color: var(--blue); letter-spacing: 3px; text-transform: uppercase; font-weight: 700; }
   .loader-bar { width: 200px; height: 3px; background: var(--border); border-radius: 3px; overflow: hidden; }
@@ -137,16 +137,25 @@
   <button class="tab" onclick="showTab('rondas', this)">Fiscalização Rondas</button>
 </div>
 <main>
+  <!-- VISÃO GERAL -->
   <div id="visao-geral" class="tab-content active">
     <div class="section-header"><h2>Resumo do Mês Atual</h2><div class="line"></div></div>
     <div class="cards-grid" id="cards-geral"></div>
-    <div class="section-header"><h2>Evolução Mensal</h2><div class="line"></div></div>
+    <div class="section-header">
+      <h2>Evolução Mensal</h2>
+      <div class="line"></div>
+      <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+        <span class="filter-label" style="font-size:10px;letter-spacing:1px;color:var(--text-muted);font-weight:700;text-transform:uppercase">Mês ref.</span>
+        <select id="select-mes-geral" onchange="renderGraficosFiltrados()" style="min-width:130px;padding:6px 10px;font-size:12px"></select>
+      </div>
+    </div>
     <div class="charts-row">
-      <div class="chart-box"><div class="chart-title">Evasão Média (%)</div><div class="chart-sub">Evolução mensal</div><div class="chart-wrap"><canvas id="chart-evasao"></canvas></div></div>
-      <div class="chart-box"><div class="chart-title">Perda Financeira (R$)</div><div class="chart-sub">Evolução mensal</div><div class="chart-wrap"><canvas id="chart-financeiro"></canvas></div></div>
-      <div class="chart-box full"><div class="chart-title">Total de Peças Evadidas</div><div class="chart-sub">Evolução mensal</div><div class="chart-wrap"><canvas id="chart-pecas"></canvas></div></div>
+      <div class="chart-box"><div class="chart-title">Evasão Média (%)</div><div class="chart-sub">Últimos 6 meses</div><div class="chart-wrap"><canvas id="chart-evasao"></canvas></div></div>
+      <div class="chart-box"><div class="chart-title">Perda Financeira (R$)</div><div class="chart-sub">Últimos 6 meses</div><div class="chart-wrap"><canvas id="chart-financeiro"></canvas></div></div>
+      <div class="chart-box full"><div class="chart-title">Total de Peças Evadidas</div><div class="chart-sub">Últimos 6 meses</div><div class="chart-wrap"><canvas id="chart-pecas"></canvas></div></div>
     </div>
   </div>
+  <!-- POR CLIENTE -->
   <div id="por-cliente" class="tab-content">
     <div class="filter-bar">
       <span class="filter-label">Cliente</span>
@@ -164,11 +173,12 @@
       </table>
     </div>
   </div>
+  <!-- RONDAS -->
   <div id="rondas" class="tab-content">
     <div id="mes-ronda-indicator" class="mes-indicator"><span></span> Período de referência: carregando...</div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Cliente</th><th>Status Última Ronda</th><th>Eficiência</th><th>Dias sem Ronda</th><th>Situação</th></tr></thead>
+        <thead><tr><th>Cliente</th><th>Última Ronda</th><th>Eficiência</th><th>Dias sem Ronda</th><th>Situação</th></tr></thead>
         <tbody id="rondas-tbody"></tbody>
       </table>
     </div>
@@ -248,13 +258,12 @@ function showTab(id, btn) {
   btn.classList.add('active');
 }
 
-function makeChart(id, type, labels, datasets, opts = {}) {
+function makeChart(id, type, labels, datasets) {
   const ctx = document.getElementById(id); if (!ctx) return null;
   return new Chart(ctx, { type, data: { labels, datasets }, options: {
     responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: datasets.length > 1, labels: { color: '#5a7a96', font: { family: 'Inter', size: 11 } } }, tooltip: { backgroundColor: '#1a2a3a', titleColor: '#fff', bodyColor: '#d0dce8' } },
-    scales: { x: { ticks: { color: '#5a7a96', font: { family: 'Inter', size: 11 } }, grid: { color: '#e8eef5' } }, y: { ticks: { color: '#5a7a96', font: { family: 'Inter', size: 11 } }, grid: { color: '#e8eef5' } } },
-    ...opts
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a2a3a', titleColor: '#fff', bodyColor: '#d0dce8' } },
+    scales: { x: { ticks: { color: '#5a7a96', font: { family: 'Inter', size: 11 } }, grid: { color: '#e8eef5' } }, y: { ticks: { color: '#5a7a96', font: { family: 'Inter', size: 11 } }, grid: { color: '#e8eef5' } } }
   }});
 }
 
@@ -284,19 +293,42 @@ function renderVisaoGeral() {
       <div class="card-value yellow" style="font-size:28px">${fmtMoney(financeiro)}</div>
       <div class="card-sub">Somatório do mês atual</div>
     </div>`;
-  const labels = dadosGeral.map(d => fmtMes(d['Mês']));
+
+  // Popula seletor de mês
+  const sel = document.getElementById('select-mes-geral');
+  sel.innerHTML = '';
+  dadosGeral.forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d['Mês']; opt.textContent = fmtMes(d['Mês']);
+    sel.appendChild(opt);
+  });
+  sel.value = dadosGeral[dadosGeral.length - 1]['Mês'];
+  renderGraficosFiltrados();
+}
+
+function renderGraficosFiltrados() {
+  const mesSel = document.getElementById('select-mes-geral').value;
+  const idxSel = dadosGeral.findIndex(d => d['Mês'] === mesSel);
+  const inicio = Math.max(0, idxSel - 5);
+  const janela = dadosGeral.slice(inicio, idxSel + 1);
+  const labels = janela.map(d => fmtMes(d['Mês']));
+
   if (chartEvasao) chartEvasao.destroy();
-  chartEvasao = makeChart('chart-evasao', 'line', labels, [{ data: dadosGeral.map(d => toNum(d['% Evasão Média'])), borderColor: '#1a6fb5', backgroundColor: 'rgba(26,111,181,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#1a6fb5', pointRadius: 5 }]);
+  chartEvasao = makeChart('chart-evasao', 'line', labels, [{ data: janela.map(d => toNum(d['% Evasão Média'])), borderColor: '#1a6fb5', backgroundColor: 'rgba(26,111,181,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#1a6fb5', pointRadius: 5 }]);
+
   if (chartFin) chartFin.destroy();
-  chartFin = makeChart('chart-financeiro', 'bar', labels, [{ data: dadosGeral.map(d => toNum(d['Total Perda Financeira (R$)'])), backgroundColor: 'rgba(245,166,35,0.8)', borderColor: '#f5a623', borderWidth: 1, borderRadius: 6 }]);
+  chartFin = makeChart('chart-financeiro', 'bar', labels, [{ data: janela.map(d => toNum(d['Total Perda Financeira (R$)'])), backgroundColor: 'rgba(245,166,35,0.8)', borderColor: '#f5a623', borderWidth: 1, borderRadius: 6 }]);
+
   if (chartPecas) chartPecas.destroy();
-  chartPecas = makeChart('chart-pecas', 'line', labels, [{ data: dadosGeral.map(d => toNum(d['Total Peças Evadidas'])), borderColor: '#3da84a', backgroundColor: 'rgba(61,168,74,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#3da84a', pointRadius: 5 }]);
+  chartPecas = makeChart('chart-pecas', 'line', labels, [{ data: janela.map(d => toNum(d['Total Peças Evadidas'])), borderColor: '#3da84a', backgroundColor: 'rgba(61,168,74,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#3da84a', pointRadius: 5 }]);
 }
 
 function renderSelectCliente() {
   const sel = document.getElementById('select-cliente');
   const clientes = [...new Set(dadosCliente.map(d => d['Cliente']))].sort();
   clientes.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.textContent = c; sel.appendChild(opt); });
+  // Seleciona primeiro cliente por padrão
+  if (clientes.length) { sel.value = clientes[0]; renderCliente(); }
 }
 
 function renderCliente() {
@@ -357,11 +389,15 @@ function renderRondas() {
     const efic = toNum(d['% Eficiência (Núm)']);
     const status = d['Status Última Ronda'] || '-';
     const semRonda = status.includes('Sem ronda') || status === 'Sem dados' || status === '-';
-    let statusFormatado = 'Nenhuma ronda no período';
-    if (!semRonda) { const match = status.match(/(\d{2}\/\d{2}\/\d{4})/); statusFormatado = match ? `Última leitura: ${match[1]}` : status; }
+    let statusFormatado = 'S/ Ronda no período';
+    if (!semRonda) {
+      const match = status.match(/(\d{2})\/(\d{2})\/\d{4}/);
+      statusFormatado = match ? `${match[1]}/${match[2]}` : status;
+    }
+    const diasTexto = dias >= 60 ? '+60 dias' : `${dias} dias`;
     const situacao = badgeSituacao(dias);
     const corEfic = corEficiencia(efic);
-    return `<tr><td><strong>${d['Cliente']}</strong></td><td style="font-size:12px">${statusFormatado}</td><td><span class="${corEfic}">${d['Eficiência da Ronda']||'-'}</span></td><td><strong>${dias} dias</strong></td><td><span class="badge ${situacao.cls}">${situacao.label}</span></td></tr>`;
+    return `<tr><td><strong>${d['Cliente']}</strong></td><td style="font-size:13px">${statusFormatado}</td><td><span class="${corEfic}">${d['Eficiência da Ronda']||'-'}</span></td><td><strong>${diasTexto}</strong></td><td><span class="badge ${situacao.cls}">${situacao.label}</span></td></tr>`;
   }).join('');
 }
 
