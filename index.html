@@ -107,6 +107,23 @@
   .efic-laranja { color: var(--orange); font-weight: 600; }
   .efic-amarelo { color: var(--yellow); font-weight: 600; }
   .efic-verde { color: var(--green); font-weight: 600; }
+
+  .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+  .ranking-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
+  .ranking-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .ranking-header-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0; }
+  .ranking-header h3 { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; color: var(--text); }
+  .ranking-header p { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; font-weight: 600; margin-top: 1px; }
+  .ranking-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border); transition: background 0.15s; }
+  .ranking-item:last-child { border-bottom: none; }
+  .ranking-item:hover { background: var(--blue-light); }
+  .ranking-pos { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 800; flex-shrink: 0; }
+  .ranking-pos.p1 { background: #fef3c7; color: #d97706; }
+  .ranking-pos.p2 { background: #f3f4f6; color: #6b7280; }
+  .ranking-pos.p3 { background: #fce8d8; color: #c2410c; }
+  .ranking-pos.pn { background: var(--blue-light); color: var(--blue); }
+  .ranking-nome { flex: 1; font-size: 12px; font-weight: 600; color: var(--text); }
+  .ranking-val { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; }
   @media (max-width: 768px) {
     header { padding: 0 20px; } .tabs { padding: 0 20px; } main { padding: 20px; }
     .cards-grid { grid-template-columns: 1fr; } .charts-row { grid-template-columns: 1fr; } .client-detail { grid-template-columns: repeat(2, 1fr); }
@@ -154,6 +171,23 @@
       <div class="chart-box"><div class="chart-title">Evasão Média (%)</div><div class="chart-sub">Últimos 6 meses</div><div class="chart-wrap"><canvas id="chart-evasao"></canvas></div></div>
       <div class="chart-box"><div class="chart-title">Perda Financeira (R$)</div><div class="chart-sub">Últimos 6 meses</div><div class="chart-wrap"><canvas id="chart-financeiro"></canvas></div></div>
       <div class="chart-box full"><div class="chart-title">Total de Peças Evadidas</div><div class="chart-sub">Últimos 6 meses</div><div class="chart-wrap"><canvas id="chart-pecas"></canvas></div></div>
+    </div>
+    <div class="section-header"><h2>Alertas de Rondas</h2><div class="line"></div></div>
+    <div class="ranking-grid">
+      <div class="ranking-box">
+        <div class="ranking-header">
+          <div class="ranking-header-icon" style="background:var(--red-light)">🚨</div>
+          <div><h3>Mais tempo sem ronda</h3><p>Top 5 — dias sem leitura</p></div>
+        </div>
+        <div id="ranking-sem-ronda"></div>
+      </div>
+      <div class="ranking-box">
+        <div class="ranking-header">
+          <div class="ranking-header-icon" style="background:var(--yellow-light)">📉</div>
+          <div><h3>Piores eficiências</h3><p>Top 5 — rondas com baixa eficiência</p></div>
+        </div>
+        <div id="ranking-eficiencia"></div>
+      </div>
     </div>
   </div>
   <!-- POR CLIENTE -->
@@ -324,6 +358,51 @@ function renderGraficosFiltrados() {
   chartPecas = makeChart('chart-pecas', 'line', labels, [{ data: janela.map(d => toNum(d['Total Peças Evadidas'])), borderColor: '#3da84a', backgroundColor: 'rgba(61,168,74,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#3da84a', pointRadius: 5 }]);
 }
 
+
+function renderRankings() {
+  if (!dadosRondas.length) return;
+  const meses = [...new Set(dadosRondas.map(d => d['Ano-Mês']))].sort();
+  const mesAtual = meses[meses.length - 1];
+  const dados = dadosRondas.filter(d => d['Ano-Mês'] === mesAtual);
+
+  // Top 5 sem ronda
+  const semRonda = dados
+    .sort((a,b) => toNum(b['Dias de Atraso (Núm)']) - toNum(a['Dias de Atraso (Núm)']))
+    .slice(0, 5);
+
+  const posCls = ['p1','p2','p3','pn','pn'];
+  document.getElementById('ranking-sem-ronda').innerHTML = semRonda.map((d, i) => {
+    const dias = toNum(d['Dias de Atraso (Núm)']);
+    const diasTexto = dias >= 60 ? '+60 dias' : `${dias} dias`;
+    const cor = dias >= 60 ? 'var(--red)' : dias >= 30 ? 'var(--orange)' : 'var(--yellow)';
+    return `<div class="ranking-item">
+      <div class="ranking-pos ${posCls[i]}">${i+1}</div>
+      <div class="ranking-nome">${d['Cliente']}</div>
+      <div class="ranking-val" style="color:${cor}">${diasTexto}</div>
+    </div>`;
+  }).join('');
+
+  // Top 5 piores eficiências (com ronda, excluindo S/ Equip)
+  const comRonda = dados
+    .filter(d => {
+      const s = d['Status Última Ronda'] || '';
+      const e = d['Eficiência da Ronda'] || '';
+      return !s.includes('Sem ronda') && !e.includes('S/ Equip') && e !== '-' && toNum(d['% Eficiência (Núm)']) > 0;
+    })
+    .sort((a,b) => toNum(a['% Eficiência (Núm)']) - toNum(b['% Eficiência (Núm)']))
+    .slice(0, 5);
+
+  document.getElementById('ranking-eficiencia').innerHTML = comRonda.length ? comRonda.map((d, i) => {
+    const efic = toNum(d['% Eficiência (Núm)']);
+    const cor = efic <= 40 ? 'var(--red)' : efic <= 60 ? 'var(--orange)' : 'var(--yellow)';
+    return `<div class="ranking-item">
+      <div class="ranking-pos ${posCls[i]}">${i+1}</div>
+      <div class="ranking-nome">${d['Cliente']}</div>
+      <div class="ranking-val" style="color:${cor}">${d['Eficiência da Ronda']}</div>
+    </div>`;
+  }).join('') : '<div class="empty-state" style="padding:24px">Nenhum dado disponível</div>';
+}
+
 function renderSelectCliente() {
   const sel = document.getElementById('select-cliente');
   const clientes = [...new Set(dadosCliente.map(d => d['Cliente']))].sort();
@@ -421,6 +500,7 @@ async function init() {
       if (datas.length) document.getElementById('ultima-atualizacao').textContent = '🔄 ' + datas[datas.length-1];
     }
     renderVisaoGeral();
+    renderRankings();
     renderSelectCliente();
     renderRondas();
     document.getElementById('loading').style.display = 'none';
