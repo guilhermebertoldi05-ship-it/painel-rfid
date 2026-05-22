@@ -38,9 +38,8 @@
   .header-logo-divider { width: 2px; height: 36px; background: linear-gradient(180deg, var(--blue), var(--green)); border-radius: 2px; }
   .header-title h1 { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 800; color: var(--blue-dark); letter-spacing: -0.3px; line-height: 1.2; }
   .header-title p { font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; margin-top: 2px; }
-  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
-  .header-badge { background: var(--blue-light); color: var(--blue); border: 1px solid rgba(26,111,181,0.2); border-radius: 100px; padding: 6px 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
-  .header-data-badge { background: var(--green-light); color: var(--green); border: 1px solid rgba(61,168,74,0.2); border-radius: 100px; padding: 5px 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; display: flex; align-items: center; gap: 6px; }
+  .header-right { display: flex; align-items: center; }
+  .header-data-badge { background: var(--green-light); color: var(--green); border: 1px solid rgba(61,168,74,0.2); border-radius: 100px; padding: 7px 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; display: flex; align-items: center; gap: 6px; }
   .header-data-badge.stale { background: var(--yellow-light); color: var(--yellow); border-color: rgba(245,166,35,0.3); }
   .header-data-badge.very-stale { background: var(--red-light); color: var(--red); border-color: rgba(229,57,53,0.3); }
   .header-data-badge span.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
@@ -135,7 +134,6 @@
   .efic-dia-amarelo { background: var(--yellow-light); color: var(--yellow); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
   .efic-dia-verde { background: var(--green-light); color: var(--green); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
   .efic-dia-vazio { background: #f0f4f8; color: var(--text-muted); font-weight: 500; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
-  .pecas-section { margin-top: 8px; }
   .pecas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
   .pecas-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
   .pecas-header { padding: 14px 20px; background: linear-gradient(135deg, var(--blue-dark), var(--blue)); display: flex; align-items: center; gap: 10px; }
@@ -179,7 +177,6 @@
     </div>
   </div>
   <div class="header-right">
-    <div class="header-badge" id="ultima-atualizacao">Carregando...</div>
     <div class="header-data-badge" id="dados-freshness"><span class="dot"></span> Carregando...</div>
   </div>
 </header>
@@ -189,7 +186,6 @@
   <button class="tab" onclick="showTab('rondas', this)">Fiscalização Rondas</button>
 </div>
 <main>
-  <!-- VISÃO GERAL -->
   <div id="visao-geral" class="tab-content active">
     <div class="section-header"><h2>Resumo do Mês Atual</h2><div class="line"></div></div>
     <div class="cards-grid" id="cards-geral"></div>
@@ -224,7 +220,7 @@
       </div>
     </div>
   </div>
-  <!-- POR CLIENTE -->
+
   <div id="por-cliente" class="tab-content">
     <div class="filter-bar">
       <span class="filter-label">Cliente</span>
@@ -254,22 +250,18 @@
       <div class="section-header" style="margin-top:8px"><h2>Peças Mais Evadidas</h2><div class="line"></div></div>
       <div class="pecas-grid">
         <div class="pecas-box">
-          <div class="pecas-header">
-            <div><h3>Top 5 — Geral do Mês</h3><p>Todas as peças sem filtro de setor</p></div>
-          </div>
+          <div class="pecas-header"><div><h3>Top 5 — Geral do Mês</h3><p>Todas as peças sem filtro de setor</p></div></div>
           <div id="pecas-geral-lista"></div>
         </div>
         <div class="pecas-box">
-          <div class="pecas-header">
-            <div><h3>Top 5 — Por Setor Crítico</h3><p>Peças evadidas nos 3 piores setores</p></div>
-          </div>
+          <div class="pecas-header"><div><h3>Top 5 — Por Setor Crítico</h3><p>Peças evadidas nos 3 piores setores</p></div></div>
           <div class="setores-tabs" id="setores-tabs"></div>
           <div id="setores-conteudo"></div>
         </div>
       </div>
     </div>
   </div>
-  <!-- RONDAS -->
+
   <div id="rondas" class="tab-content">
     <div id="mes-ronda-indicator" class="mes-indicator"><span></span> Período de referência: carregando...</div>
     <div class="table-wrap">
@@ -280,11 +272,14 @@
     </div>
   </div>
 </main>
+
 <script>
 const SHEET_ID = '2PACX-1vTU9hUjM3qXPi08-gAAlnuOBqPtABLmrYJaJ1TrOx8J12YFoqdJXGukVptHxxqd84prEoeVTCNejfUy';
 const GIDS = { 'Visão_Geral': '211713039', 'Por_Cliente': '1630187568', 'Rondas': '1562548530', 'Rondas_Semana': '329455742', 'Pecas_Geral': '959213890', 'Pecas_Setor': '1154061757' };
 const BASE_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?output=csv&gid=`;
-let dadosGeral = [], dadosCliente = [], dadosRondas = [], dadosRondasSemana = [], dadosPecasGeral = [], dadosPecasSetor = [];
+
+let dadosGeral = [], dadosCliente = [], dadosRondas = [], dadosRondasSemana = [];
+let dadosPecasGeralParsed = [], dadosPecasSetorParsed = [];
 let chartEvasao, chartFin, chartPecas, chartCliEvasao, chartCliFin;
 
 function parseCSVLine(line) {
@@ -297,7 +292,6 @@ function parseCSVLine(line) {
   result.push(current); return result;
 }
 
-// Retorna array de arrays (linhas), sem colapsar colunas duplicadas
 function parseCSVRaw(txt) {
   const lines = txt.trim().split('\n');
   return lines.map(l => parseCSVLine(l).map(v => v.trim()));
@@ -327,7 +321,6 @@ function fmtMes(v) {
   const nomes = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
   return (nomes[parseInt(mes)-1] || mes) + '/' + String(ano).slice(-2);
 }
-
 function corEvasao(pct) {
   const v = toNum(pct);
   if (v < 0.5) return 'pct-azul';
@@ -335,7 +328,6 @@ function corEvasao(pct) {
   if (v <= 2.0) return 'pct-amarelo';
   return 'pct-vermelho';
 }
-
 function corEficiencia(pct) {
   const v = toNum(pct);
   if (v <= 40) return 'efic-vermelho';
@@ -343,7 +335,6 @@ function corEficiencia(pct) {
   if (v <= 80) return 'efic-amarelo';
   return 'efic-verde';
 }
-
 function badgeSituacao(dias) {
   const d = toNum(dias);
   if (d <= 5) return { label: 'Regular', cls: 'badge-green' };
@@ -352,14 +343,12 @@ function badgeSituacao(dias) {
   if (d <= 60) return { label: 'Crítico', cls: 'badge-red' };
   return { label: 'Sem Ronda', cls: 'badge-gray' };
 }
-
 function showTab(id, btn) {
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
 }
-
 function makeChart(id, type, labels, datasets) {
   const ctx = document.getElementById(id); if (!ctx) return null;
   return new Chart(ctx, { type, data: { labels, datasets }, options: {
@@ -369,12 +358,13 @@ function makeChart(id, type, labels, datasets) {
   }});
 }
 
-// --- Badge de frescor dos dados ---
 function renderDataFreshness(dataExtracaoStr) {
   const badge = document.getElementById('dados-freshness');
-  if (!dataExtracaoStr) { badge.innerHTML = '<span class="dot"></span> Sem dados'; return; }
-
-  // Formato: "DD/MM/YYYY HH:MM"
+  if (!dataExtracaoStr) {
+    badge.className = 'header-data-badge stale';
+    badge.innerHTML = '<span class="dot"></span> Sem dados';
+    return;
+  }
   const partes = dataExtracaoStr.split(' ');
   const [dia, mes, ano] = partes[0].split('/');
   const [hora, min] = (partes[1] || '00:00').split(':');
@@ -385,18 +375,49 @@ function renderDataFreshness(dataExtracaoStr) {
 
   let texto, cls;
   if (diffHoras < 12) {
-    texto = `Dados de hoje — ${partes[1] || ''}`;
+    texto = `Atualizado hoje às ${partes[1] || ''}`;
     cls = '';
   } else if (diffDias < 2) {
-    texto = `Dados de ontem`;
+    texto = `Atualizado ontem às ${partes[1] || ''}`;
     cls = 'stale';
   } else {
-    texto = `Dados de ${diffDias} dias atrás`;
+    texto = `Desatualizado — ${diffDias} dias sem rodar`;
     cls = 'very-stale';
   }
-
   badge.className = 'header-data-badge' + (cls ? ' ' + cls : '');
   badge.innerHTML = `<span class="dot"></span> ${texto}`;
+}
+
+function parsePecasGeral(rawRows) {
+  if (rawRows.length < 2) return [];
+  return rawRows.slice(1).filter(r => r.length > 2 && r[2]).map(r => {
+    const obj = { dataExtracao: r[0], mes: r[1], cliente: r[2], pecas: [] };
+    for (let i = 0; i < 5; i++) {
+      const base = 3 + i * 3;
+      obj.pecas.push({
+        peca: r[base] || '-',
+        qtd: r[base + 1] || '0',
+        preco: r[base + 2] || '0'
+      });
+    }
+    return obj;
+  });
+}
+
+function parsePecasSetor(rawRows) {
+  if (rawRows.length < 2) return [];
+  return rawRows.slice(1).filter(r => r.length > 4 && r[2]).map(r => {
+    const obj = { dataExtracao: r[0], mes: r[1], cliente: r[2], setor: r[3], rank: parseInt(r[4]) || 1, pecas: [] };
+    for (let i = 0; i < 5; i++) {
+      const base = 5 + i * 3;
+      obj.pecas.push({
+        peca: r[base] || '-',
+        qtd: r[base + 1] || '0',
+        preco: r[base + 2] || '0'
+      });
+    }
+    return obj;
+  });
 }
 
 function renderVisaoGeral() {
@@ -425,7 +446,6 @@ function renderVisaoGeral() {
       <div class="card-value yellow" style="font-size:28px">${fmtMoney(financeiro)}</div>
       <div class="card-sub">Somatório do mês atual</div>
     </div>`;
-
   const sel = document.getElementById('select-mes-geral');
   sel.innerHTML = '';
   dadosGeral.forEach(d => {
@@ -456,8 +476,8 @@ function renderRankings() {
   const meses = [...new Set(dadosRondas.map(d => d['Ano-Mês']))].sort();
   const mesAtual = meses[meses.length - 1];
   const dados = dadosRondas.filter(d => d['Ano-Mês'] === mesAtual);
-  const semRonda = dados.sort((a,b) => toNum(b['Dias de Atraso (Núm)']) - toNum(a['Dias de Atraso (Núm)'])).slice(0, 5);
   const posCls = ['p1','p2','p3','pn','pn'];
+  const semRonda = [...dados].sort((a,b) => toNum(b['Dias de Atraso (Núm)']) - toNum(a['Dias de Atraso (Núm)'])).slice(0, 5);
   document.getElementById('ranking-sem-ronda').innerHTML = semRonda.map((d, i) => {
     const dias = toNum(d['Dias de Atraso (Núm)']);
     const diasTexto = dias >= 60 ? '+60 dias' : `${dias} dias`;
@@ -531,54 +551,16 @@ function renderCliente() {
   }).join('');
 }
 
-// Lê peças por índice posicional para evitar bug de colunas duplicadas
-// Pecas_Geral: col 0=DataExt, 1=MêsRef, 2=Cliente, depois grupos de 3: [Peça, Qtd, Preço] x5
-// Pecas_Setor: col 0=DataExt, 1=MêsRef, 2=Cliente, 3=Setor, 4=RankSetor, depois grupos de 3: [Peça, Qtd, Preço] x5
-function parsePecasGeral(rawRows) {
-  // rawRows[0] = cabeçalho, rawRows[1..] = dados
-  if (rawRows.length < 2) return [];
-  return rawRows.slice(1).filter(r => r.length > 2 && r[2]).map(r => {
-    const obj = { cliente: r[2], mes: r[1], pecas: [] };
-    for (let i = 0; i < 5; i++) {
-      const base = 3 + i * 3;
-      obj.pecas.push({
-        peca: r[base] || '-',
-        qtd: r[base + 1] || '0',
-        preco: r[base + 2] || '0'
-      });
-    }
-    return obj;
-  });
-}
-
-function parsePecasSetor(rawRows) {
-  if (rawRows.length < 2) return [];
-  return rawRows.slice(1).filter(r => r.length > 4 && r[2]).map(r => {
-    const obj = { cliente: r[2], mes: r[1], setor: r[3], rank: parseInt(r[4]) || 1, pecas: [] };
-    for (let i = 0; i < 5; i++) {
-      const base = 5 + i * 3;
-      obj.pecas.push({
-        peca: r[base] || '-',
-        qtd: r[base + 1] || '0',
-        preco: r[base + 2] || '0'
-      });
-    }
-    return obj;
-  });
-}
-
 function renderPecasCliente(cliente) {
   const wrapPecas = document.getElementById('pecas-cliente-wrap');
   if (!wrapPecas) return;
   const rankCls = ['r1','r2','r3','rn','rn'];
 
-  // Pecas Geral
   const rowGeral = dadosPecasGeralParsed.find(d => d.cliente === cliente);
   const listaGeral = document.getElementById('pecas-geral-lista');
   if (rowGeral) {
-    const html = rowGeral.pecas
-      .filter(p => p.peca && p.peca !== '-')
-      .map((p, i) => `<div class="pecas-item">
+    const html = rowGeral.pecas.filter(p => p.peca && p.peca !== '-').map((p, i) =>
+      `<div class="pecas-item">
         <div class="pecas-rank ${rankCls[i]}">${i+1}</div>
         <div class="pecas-nome">${p.peca}</div>
         <div class="pecas-qtd">${p.qtd}</div>
@@ -588,22 +570,15 @@ function renderPecasCliente(cliente) {
     listaGeral.innerHTML = '<div class="empty-state" style="padding:20px">Sem dados disponíveis</div>';
   }
 
-  // Pecas por Setor
-  const rowsSetor = dadosPecasSetorParsed
-    .filter(d => d.cliente === cliente)
-    .sort((a, b) => a.rank - b.rank);
-
+  const rowsSetor = dadosPecasSetorParsed.filter(d => d.cliente === cliente).sort((a,b) => a.rank - b.rank);
   const tabsEl = document.getElementById('setores-tabs');
   const contEl = document.getElementById('setores-conteudo');
-
   if (rowsSetor.length) {
     tabsEl.innerHTML = rowsSetor.map((r, i) =>
-      `<button class="setor-tab ${i===0?'active':''}" onclick="switchSetor(${i}, this)">${r.setor}</button>`
-    ).join('');
+      `<button class="setor-tab ${i===0?'active':''}" onclick="switchSetor(${i}, this)">${r.setor}</button>`).join('');
     contEl.innerHTML = rowsSetor.map((r, i) => {
-      const items = r.pecas
-        .filter(p => p.peca && p.peca !== '-')
-        .map((p, idx) => `<div class="pecas-item">
+      const items = r.pecas.filter(p => p.peca && p.peca !== '-').map((p, idx) =>
+        `<div class="pecas-item">
           <div class="pecas-rank ${rankCls[idx]}">${idx+1}</div>
           <div class="pecas-nome">${p.peca}</div>
           <div class="pecas-qtd">${p.qtd}</div>
@@ -614,7 +589,6 @@ function renderPecasCliente(cliente) {
     tabsEl.innerHTML = '';
     contEl.innerHTML = '<div class="empty-state" style="padding:20px">Sem dados de setores disponíveis</div>';
   }
-
   wrapPecas.style.display = 'block';
 }
 
@@ -696,9 +670,6 @@ function renderRondas() {
   }).join('');
 }
 
-let dadosPecasGeralParsed = [];
-let dadosPecasSetorParsed = [];
-
 async function init() {
   try {
     const [txtGeral, txtCliente, txtRondas, txtSemana, txtPecasG, txtPecasS] = await Promise.all([
@@ -710,23 +681,17 @@ async function init() {
       fetch(`${BASE_URL}${GIDS['Pecas_Setor']}`).then(r => r.text()),
     ]);
 
-    dadosGeral = parseCSVText(txtGeral);
-    dadosCliente = parseCSVText(txtCliente);
-    dadosRondas = parseCSVText(txtRondas);
+    dadosGeral      = parseCSVText(txtGeral);
+    dadosCliente    = parseCSVText(txtCliente);
+    dadosRondas     = parseCSVText(txtRondas);
     dadosRondasSemana = parseCSVText(txtSemana);
-
-    // Pecas usam parser posicional para evitar bug de colunas duplicadas
     dadosPecasGeralParsed = parsePecasGeral(parseCSVRaw(txtPecasG));
     dadosPecasSetorParsed = parsePecasSetor(parseCSVRaw(txtPecasS));
 
-    // Badge de última atualização
-    if (dadosCliente.length) {
-      const datas = dadosCliente.map(d => d['Data Extração'] || '').filter(Boolean);
-      if (datas.length) {
-        const ultima = datas[datas.length - 1];
-        document.getElementById('ultima-atualizacao').textContent = '🔄 ' + ultima;
-        renderDataFreshness(ultima);
-      }
+    // Badge de frescor — usa Data Extração da Pecas_Geral (sempre atualizada pelo robo)
+    if (dadosPecasGeralParsed.length) {
+      const ultimaData = dadosPecasGeralParsed[dadosPecasGeralParsed.length - 1].dataExtracao;
+      if (ultimaData) renderDataFreshness(ultimaData);
     }
 
     renderVisaoGeral();
