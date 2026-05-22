@@ -38,7 +38,12 @@
   .header-logo-divider { width: 2px; height: 36px; background: linear-gradient(180deg, var(--blue), var(--green)); border-radius: 2px; }
   .header-title h1 { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 800; color: var(--blue-dark); letter-spacing: -0.3px; line-height: 1.2; }
   .header-title p { font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; margin-top: 2px; }
+  .header-right { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
   .header-badge { background: var(--blue-light); color: var(--blue); border: 1px solid rgba(26,111,181,0.2); border-radius: 100px; padding: 6px 14px; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; }
+  .header-data-badge { background: var(--green-light); color: var(--green); border: 1px solid rgba(61,168,74,0.2); border-radius: 100px; padding: 5px 12px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; display: flex; align-items: center; gap: 6px; }
+  .header-data-badge.stale { background: var(--yellow-light); color: var(--yellow); border-color: rgba(245,166,35,0.3); }
+  .header-data-badge.very-stale { background: var(--red-light); color: var(--red); border-color: rgba(229,57,53,0.3); }
+  .header-data-badge span.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
   .tabs { position: relative; z-index: 10; display: flex; gap: 2px; padding: 0 40px; background: var(--surface); border-bottom: 1px solid var(--border); }
   .tab { padding: 14px 28px; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); cursor: pointer; border: none; background: transparent; border-bottom: 3px solid transparent; transition: all 0.2s; position: relative; bottom: -1px; }
   .tab:hover { color: var(--blue); }
@@ -107,7 +112,6 @@
   .efic-laranja { color: var(--orange); font-weight: 600; }
   .efic-amarelo { color: var(--yellow); font-weight: 600; }
   .efic-verde { color: var(--green); font-weight: 600; }
-
   .ranking-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
   .ranking-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
   .ranking-header { padding: 16px 20px 12px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
@@ -124,7 +128,6 @@
   .ranking-pos.pn { background: var(--blue-light); color: var(--blue); }
   .ranking-nome { flex: 1; font-size: 12px; font-weight: 600; color: var(--text); }
   .ranking-val { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; }
-
   .semana-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 24px; }
   .semana-wrap table th { background: linear-gradient(135deg, var(--blue-dark), var(--blue)); color: rgba(255,255,255,0.9); }
   .efic-dia-vermelho { background: #fdecea; color: var(--red); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
@@ -132,7 +135,6 @@
   .efic-dia-amarelo { background: var(--yellow-light); color: var(--yellow); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
   .efic-dia-verde { background: var(--green-light); color: var(--green); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
   .efic-dia-vazio { background: #f0f4f8; color: var(--text-muted); font-weight: 500; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
-
   .pecas-section { margin-top: 8px; }
   .pecas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
   .pecas-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
@@ -149,7 +151,7 @@
   .pecas-rank.rn { background: var(--blue-light); color: var(--blue); }
   .pecas-nome { flex: 1; font-size: 12px; font-weight: 600; color: var(--text); }
   .pecas-qtd { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; color: var(--red); }
-  .setores-tabs { display: flex; gap: 4px; padding: 12px 16px 0; border-bottom: 1px solid var(--border); background: var(--surface2); }
+  .setores-tabs { display: flex; gap: 4px; padding: 12px 16px 0; border-bottom: 1px solid var(--border); background: var(--surface2); flex-wrap: wrap; }
   .setor-tab { padding: 8px 16px; font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--text-muted); cursor: pointer; border: none; background: transparent; border-bottom: 2px solid transparent; transition: all 0.2s; position: relative; bottom: -1px; }
   .setor-tab:hover { color: var(--blue); }
   .setor-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
@@ -178,6 +180,7 @@
   </div>
   <div class="header-right">
     <div class="header-badge" id="ultima-atualizacao">Carregando...</div>
+    <div class="header-data-badge" id="dados-freshness"><span class="dot"></span> Carregando...</div>
   </div>
 </header>
 <div class="tabs">
@@ -294,6 +297,12 @@ function parseCSVLine(line) {
   result.push(current); return result;
 }
 
+// Retorna array de arrays (linhas), sem colapsar colunas duplicadas
+function parseCSVRaw(txt) {
+  const lines = txt.trim().split('\n');
+  return lines.map(l => parseCSVLine(l).map(v => v.trim()));
+}
+
 function parseCSVText(txt) {
   const lines = txt.trim().split('\n');
   const headers = parseCSVLine(lines[0]);
@@ -360,6 +369,36 @@ function makeChart(id, type, labels, datasets) {
   }});
 }
 
+// --- Badge de frescor dos dados ---
+function renderDataFreshness(dataExtracaoStr) {
+  const badge = document.getElementById('dados-freshness');
+  if (!dataExtracaoStr) { badge.innerHTML = '<span class="dot"></span> Sem dados'; return; }
+
+  // Formato: "DD/MM/YYYY HH:MM"
+  const partes = dataExtracaoStr.split(' ');
+  const [dia, mes, ano] = partes[0].split('/');
+  const [hora, min] = (partes[1] || '00:00').split(':');
+  const dtExtracao = new Date(parseInt(ano), parseInt(mes)-1, parseInt(dia), parseInt(hora), parseInt(min));
+  const agora = new Date();
+  const diffHoras = (agora - dtExtracao) / (1000 * 60 * 60);
+  const diffDias = Math.floor(diffHoras / 24);
+
+  let texto, cls;
+  if (diffHoras < 12) {
+    texto = `Dados de hoje — ${partes[1] || ''}`;
+    cls = '';
+  } else if (diffDias < 2) {
+    texto = `Dados de ontem`;
+    cls = 'stale';
+  } else {
+    texto = `Dados de ${diffDias} dias atrás`;
+    cls = 'very-stale';
+  }
+
+  badge.className = 'header-data-badge' + (cls ? ' ' + cls : '');
+  badge.innerHTML = `<span class="dot"></span> ${texto}`;
+}
+
 function renderVisaoGeral() {
   if (!dadosGeral.length) return;
   const ultimo = dadosGeral[dadosGeral.length - 1];
@@ -387,7 +426,6 @@ function renderVisaoGeral() {
       <div class="card-sub">Somatório do mês atual</div>
     </div>`;
 
-  // Popula seletor de mês
   const sel = document.getElementById('select-mes-geral');
   sel.innerHTML = '';
   dadosGeral.forEach(d => {
@@ -405,59 +443,36 @@ function renderGraficosFiltrados() {
   const inicio = Math.max(0, idxSel - 5);
   const janela = dadosGeral.slice(inicio, idxSel + 1);
   const labels = janela.map(d => fmtMes(d['Mês']));
-
   if (chartEvasao) chartEvasao.destroy();
   chartEvasao = makeChart('chart-evasao', 'line', labels, [{ data: janela.map(d => toNum(d['% Evasão Média'])), borderColor: '#1a6fb5', backgroundColor: 'rgba(26,111,181,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#1a6fb5', pointRadius: 5 }]);
-
   if (chartFin) chartFin.destroy();
   chartFin = makeChart('chart-financeiro', 'bar', labels, [{ data: janela.map(d => toNum(d['Total Perda Financeira (R$)'])), backgroundColor: 'rgba(245,166,35,0.8)', borderColor: '#f5a623', borderWidth: 1, borderRadius: 6 }]);
-
   if (chartPecas) chartPecas.destroy();
   chartPecas = makeChart('chart-pecas', 'line', labels, [{ data: janela.map(d => toNum(d['Total Peças Evadidas'])), borderColor: '#3da84a', backgroundColor: 'rgba(61,168,74,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#3da84a', pointRadius: 5 }]);
 }
-
 
 function renderRankings() {
   if (!dadosRondas.length) return;
   const meses = [...new Set(dadosRondas.map(d => d['Ano-Mês']))].sort();
   const mesAtual = meses[meses.length - 1];
   const dados = dadosRondas.filter(d => d['Ano-Mês'] === mesAtual);
-
-  // Top 5 sem ronda
-  const semRonda = dados
-    .sort((a,b) => toNum(b['Dias de Atraso (Núm)']) - toNum(a['Dias de Atraso (Núm)']))
-    .slice(0, 5);
-
+  const semRonda = dados.sort((a,b) => toNum(b['Dias de Atraso (Núm)']) - toNum(a['Dias de Atraso (Núm)'])).slice(0, 5);
   const posCls = ['p1','p2','p3','pn','pn'];
   document.getElementById('ranking-sem-ronda').innerHTML = semRonda.map((d, i) => {
     const dias = toNum(d['Dias de Atraso (Núm)']);
     const diasTexto = dias >= 60 ? '+60 dias' : `${dias} dias`;
     const cor = dias >= 60 ? 'var(--red)' : dias >= 30 ? 'var(--orange)' : 'var(--yellow)';
-    return `<div class="ranking-item">
-      <div class="ranking-pos ${posCls[i]}">${i+1}</div>
-      <div class="ranking-nome">${d['Cliente']}</div>
-      <div class="ranking-val" style="color:${cor}">${diasTexto}</div>
-    </div>`;
+    return `<div class="ranking-item"><div class="ranking-pos ${posCls[i]}">${i+1}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:${cor}">${diasTexto}</div></div>`;
   }).join('');
-
-  // Top 5 piores eficiências (com ronda, excluindo S/ Equip)
-  const comRonda = dados
-    .filter(d => {
-      const s = d['Status Última Ronda'] || '';
-      const e = d['Eficiência da Ronda'] || '';
-      return !s.includes('Sem ronda') && !e.includes('S/ Equip') && e !== '-' && toNum(d['% Eficiência (Núm)']) > 0;
-    })
-    .sort((a,b) => toNum(a['% Eficiência (Núm)']) - toNum(b['% Eficiência (Núm)']))
-    .slice(0, 5);
-
+  const comRonda = dados.filter(d => {
+    const s = d['Status Última Ronda'] || '';
+    const e = d['Eficiência da Ronda'] || '';
+    return !s.includes('Sem ronda') && !e.includes('S/ Equip') && e !== '-' && toNum(d['% Eficiência (Núm)']) > 0;
+  }).sort((a,b) => toNum(a['% Eficiência (Núm)']) - toNum(b['% Eficiência (Núm)'])).slice(0, 5);
   document.getElementById('ranking-eficiencia').innerHTML = comRonda.length ? comRonda.map((d, i) => {
     const efic = toNum(d['% Eficiência (Núm)']);
     const cor = efic <= 40 ? 'var(--red)' : efic <= 60 ? 'var(--orange)' : 'var(--yellow)';
-    return `<div class="ranking-item">
-      <div class="ranking-pos ${posCls[i]}">${i+1}</div>
-      <div class="ranking-nome">${d['Cliente']}</div>
-      <div class="ranking-val" style="color:${cor}">${d['Eficiência da Ronda']}</div>
-    </div>`;
+    return `<div class="ranking-item"><div class="ranking-pos ${posCls[i]}">${i+1}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:${cor}">${d['Eficiência da Ronda']}</div></div>`;
   }).join('') : '<div class="empty-state" style="padding:24px">Nenhum dado disponível</div>';
 }
 
@@ -465,7 +480,6 @@ function renderSelectCliente() {
   const sel = document.getElementById('select-cliente');
   const clientes = [...new Set(dadosCliente.map(d => d['Cliente']))].sort();
   clientes.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.textContent = c; sel.appendChild(opt); });
-  // Seleciona primeiro cliente por padrão
   if (clientes.length) { sel.value = clientes[0]; renderCliente(); }
 }
 
@@ -517,69 +531,83 @@ function renderCliente() {
   }).join('');
 }
 
+// Lê peças por índice posicional para evitar bug de colunas duplicadas
+// Pecas_Geral: col 0=DataExt, 1=MêsRef, 2=Cliente, depois grupos de 3: [Peça, Qtd, Preço] x5
+// Pecas_Setor: col 0=DataExt, 1=MêsRef, 2=Cliente, 3=Setor, 4=RankSetor, depois grupos de 3: [Peça, Qtd, Preço] x5
+function parsePecasGeral(rawRows) {
+  // rawRows[0] = cabeçalho, rawRows[1..] = dados
+  if (rawRows.length < 2) return [];
+  return rawRows.slice(1).filter(r => r.length > 2 && r[2]).map(r => {
+    const obj = { cliente: r[2], mes: r[1], pecas: [] };
+    for (let i = 0; i < 5; i++) {
+      const base = 3 + i * 3;
+      obj.pecas.push({
+        peca: r[base] || '-',
+        qtd: r[base + 1] || '0',
+        preco: r[base + 2] || '0'
+      });
+    }
+    return obj;
+  });
+}
 
+function parsePecasSetor(rawRows) {
+  if (rawRows.length < 2) return [];
+  return rawRows.slice(1).filter(r => r.length > 4 && r[2]).map(r => {
+    const obj = { cliente: r[2], mes: r[1], setor: r[3], rank: parseInt(r[4]) || 1, pecas: [] };
+    for (let i = 0; i < 5; i++) {
+      const base = 5 + i * 3;
+      obj.pecas.push({
+        peca: r[base] || '-',
+        qtd: r[base + 1] || '0',
+        preco: r[base + 2] || '0'
+      });
+    }
+    return obj;
+  });
+}
 
 function renderPecasCliente(cliente) {
   const wrapPecas = document.getElementById('pecas-cliente-wrap');
   if (!wrapPecas) return;
-
-  // Pecas Geral
-  const rowGeral = dadosPecasGeral.find(d => d['Cliente'] === cliente);
-  const listaGeral = document.getElementById('pecas-geral-lista');
   const rankCls = ['r1','r2','r3','rn','rn'];
 
+  // Pecas Geral
+  const rowGeral = dadosPecasGeralParsed.find(d => d.cliente === cliente);
+  const listaGeral = document.getElementById('pecas-geral-lista');
   if (rowGeral) {
-    let html = '';
-    for (let i = 1; i <= 5; i++) {
-      const peca = rowGeral[`${i}ª Peça`] || '-';
-      const qtd = rowGeral['Qtd' + (i > 1 ? '.' + (i-1) : '')] || rowGeral['Qtd'] || '-';
-      // Try different key patterns
-      const keys = Object.keys(rowGeral);
-      const pecaKey = keys.filter(k => k.includes('Peça'))[i-1];
-      const qtdKey = keys.filter(k => k === 'Qtd' || k.startsWith('Qtd'))[i-1];
-      const pecaVal = pecaKey ? rowGeral[pecaKey] : '-';
-      const qtdVal = qtdKey ? rowGeral[qtdKey] : '-';
-      if (pecaVal && pecaVal !== '-') {
-        html += `<div class="pecas-item">
-          <div class="pecas-rank ${rankCls[i-1]}">${i}</div>
-          <div class="pecas-nome">${pecaVal}</div>
-          <div class="pecas-qtd">${qtdVal}</div>
-        </div>`;
-      }
-    }
+    const html = rowGeral.pecas
+      .filter(p => p.peca && p.peca !== '-')
+      .map((p, i) => `<div class="pecas-item">
+        <div class="pecas-rank ${rankCls[i]}">${i+1}</div>
+        <div class="pecas-nome">${p.peca}</div>
+        <div class="pecas-qtd">${p.qtd}</div>
+      </div>`).join('');
     listaGeral.innerHTML = html || '<div class="empty-state" style="padding:20px">Sem dados</div>';
   } else {
     listaGeral.innerHTML = '<div class="empty-state" style="padding:20px">Sem dados disponíveis</div>';
   }
 
   // Pecas por Setor
-  const rowsSetor = dadosPecasSetor.filter(d => d['Cliente'] === cliente)
-    .sort((a,b) => parseInt(a['Rank Setor']) - parseInt(b['Rank Setor']));
+  const rowsSetor = dadosPecasSetorParsed
+    .filter(d => d.cliente === cliente)
+    .sort((a, b) => a.rank - b.rank);
 
   const tabsEl = document.getElementById('setores-tabs');
   const contEl = document.getElementById('setores-conteudo');
 
   if (rowsSetor.length) {
     tabsEl.innerHTML = rowsSetor.map((r, i) =>
-      `<button class="setor-tab ${i===0?'active':''}" onclick="switchSetor(${i}, this)">${r['Setor']}</button>`
+      `<button class="setor-tab ${i===0?'active':''}" onclick="switchSetor(${i}, this)">${r.setor}</button>`
     ).join('');
-
     contEl.innerHTML = rowsSetor.map((r, i) => {
-      const keys = Object.keys(r);
-      const pecaKeys = keys.filter(k => k.includes('Peça'));
-      const qtdKeys = keys.filter(k => k === 'Qtd' || k.startsWith('Qtd'));
-      let items = '';
-      pecaKeys.forEach((pk, idx) => {
-        const pv = r[pk] || '-';
-        const qv = qtdKeys[idx] ? r[qtdKeys[idx]] : '-';
-        if (pv !== '-') {
-          items += `<div class="pecas-item">
-            <div class="pecas-rank ${rankCls[idx]}">${idx+1}</div>
-            <div class="pecas-nome">${pv}</div>
-            <div class="pecas-qtd">${qv}</div>
-          </div>`;
-        }
-      });
+      const items = r.pecas
+        .filter(p => p.peca && p.peca !== '-')
+        .map((p, idx) => `<div class="pecas-item">
+          <div class="pecas-rank ${rankCls[idx]}">${idx+1}</div>
+          <div class="pecas-nome">${p.peca}</div>
+          <div class="pecas-qtd">${p.qtd}</div>
+        </div>`).join('');
       return `<div class="setor-content ${i===0?'active':''}" id="setor-tab-${i}">${items || '<div class="empty-state" style="padding:20px">Sem dados</div>'}</div>`;
     }).join('');
   } else {
@@ -604,25 +632,18 @@ function renderRondasSemanaCliente(cliente) {
   const header = document.getElementById('semana-header');
   const tbody = document.getElementById('semana-tbody');
   if (!header || !tbody) return;
-
   const colunas = Object.keys(dadosRondasSemana[0]).filter(k => k !== 'Cliente');
-
   header.innerHTML = '<th style="text-align:left">Cliente</th>' + colunas.map(d => {
-    const dia = diaSemana(d);
-    const dd = d.substring(0,5);
+    const dia = diaSemana(d); const dd = d.substring(0,5);
     return `<th>${dia}<br><span style="font-weight:500;opacity:0.8;font-size:9px">${dd}</span></th>`;
   }).join('');
-
   if (!row) {
     tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sem dados semanais para este cliente</td></tr>';
     return;
   }
-
   const cells = colunas.map(d => {
-    const val = row[d] || '-';
-    const cls = corEficDia(val);
-    const display = val === '-' ? '—' : val;
-    return `<td><span class="${cls}">${display}</span></td>`;
+    const val = row[d] || '-'; const cls = corEficDia(val);
+    return `<td><span class="${cls}">${val === '-' ? '—' : val}</span></td>`;
   }).join('');
   tbody.innerHTML = `<tr><td style="text-align:left"><strong>${row['Cliente']}</strong></td>${cells}</tr>`;
 }
@@ -641,37 +662,9 @@ function corEficDia(val) {
 }
 
 function diaSemana(dataStr) {
-  // dataStr = "27/04/2026"
   const [d, m, a] = dataStr.split('/');
   const dt = new Date(parseInt(a), parseInt(m)-1, parseInt(d));
-  const nomes = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
-  return nomes[dt.getDay()];
-}
-
-function renderRondasSemana() {
-  if (!dadosRondasSemana.length) return;
-  const header = document.getElementById('semana-header');
-  const tbody = document.getElementById('semana-tbody');
-  if (!header || !tbody) return;
-
-  // Pega cabeçalhos (datas) — primeira linha é o header
-  const colunas = Object.keys(dadosRondasSemana[0]).filter(k => k !== 'Cliente');
-
-  header.innerHTML = '<th style="text-align:left">Cliente</th>' + colunas.map(d => {
-    const dia = diaSemana(d);
-    const dd = d.substring(0,5); // DD/MM
-    return `<th>${dia}<br><span style="font-weight:500;opacity:0.8;font-size:9px">${dd}</span></th>`;
-  }).join('');
-
-  tbody.innerHTML = dadosRondasSemana.map(row => {
-    const cells = colunas.map(d => {
-      const val = row[d] || '-';
-      const cls = corEficDia(val);
-      const display = val === '-' ? '—' : val;
-      return `<td><span class="${cls}">${display}</span></td>`;
-    }).join('');
-    return `<tr><td style="text-align:left"><strong>${row['Cliente']}</strong></td>${cells}</tr>`;
-  }).join('');
+  return ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][dt.getDay()];
 }
 
 function renderRondas() {
@@ -691,9 +684,9 @@ function renderRondas() {
     if (!semRonda) {
       const match = status.match(/(\d{2})\/(\d{2})\/(\d{4})/);
       if (match) {
-        const diasSemana = ['domingo','segunda-feira','ter\u00e7a-feira','quarta-feira','quinta-feira','sexta-feira','s\u00e1bado'];
+        const diasNomes = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
         const dt = new Date(parseInt(match[3]), parseInt(match[2])-1, parseInt(match[1]));
-        statusFormatado = match[1] + '/' + match[2] + ' (' + diasSemana[dt.getDay()] + ')';
+        statusFormatado = match[1] + '/' + match[2] + ' (' + diasNomes[dt.getDay()] + ')';
       } else { statusFormatado = status; }
     }
     const diasTexto = dias >= 60 ? '+60 dias' : `${dias} dias`;
@@ -702,6 +695,9 @@ function renderRondas() {
     return `<tr><td><strong>${d['Cliente']}</strong></td><td style="font-size:13px">${statusFormatado}</td><td><span class="${corEfic}">${d['Eficiência da Ronda']||'-'}</span></td><td><strong>${diasTexto}</strong></td><td><span class="badge ${situacao.cls}">${situacao.label}</span></td></tr>`;
   }).join('');
 }
+
+let dadosPecasGeralParsed = [];
+let dadosPecasSetorParsed = [];
 
 async function init() {
   try {
@@ -713,16 +709,26 @@ async function init() {
       fetch(`${BASE_URL}${GIDS['Pecas_Geral']}`).then(r => r.text()),
       fetch(`${BASE_URL}${GIDS['Pecas_Setor']}`).then(r => r.text()),
     ]);
+
     dadosGeral = parseCSVText(txtGeral);
     dadosCliente = parseCSVText(txtCliente);
     dadosRondas = parseCSVText(txtRondas);
     dadosRondasSemana = parseCSVText(txtSemana);
-    dadosPecasGeral = parseCSVText(txtPecasG);
-    dadosPecasSetor = parseCSVText(txtPecasS);
+
+    // Pecas usam parser posicional para evitar bug de colunas duplicadas
+    dadosPecasGeralParsed = parsePecasGeral(parseCSVRaw(txtPecasG));
+    dadosPecasSetorParsed = parsePecasSetor(parseCSVRaw(txtPecasS));
+
+    // Badge de última atualização
     if (dadosCliente.length) {
       const datas = dadosCliente.map(d => d['Data Extração'] || '').filter(Boolean);
-      if (datas.length) document.getElementById('ultima-atualizacao').textContent = '🔄 ' + datas[datas.length-1];
+      if (datas.length) {
+        const ultima = datas[datas.length - 1];
+        document.getElementById('ultima-atualizacao').textContent = '🔄 ' + ultima;
+        renderDataFreshness(ultima);
+      }
     }
+
     renderVisaoGeral();
     renderRankings();
     renderSelectCliente();
