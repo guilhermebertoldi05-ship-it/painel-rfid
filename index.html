@@ -94,7 +94,10 @@
   .badge-blue { background: var(--blue-light); color: var(--blue); }
   .badge-orange { background: #fff3ed; color: var(--orange); }
   .badge-gray { background: #f0f4f8; color: var(--text-muted); }
-  .client-detail { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
+  
+  /* Ajuste no grid de cards do cliente para suportar de forma flexível de 4 a 5 cards */
+  .client-detail { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 20px; }
+  
   .mes-indicator { display: inline-flex; align-items: center; gap: 8px; background: var(--blue-light); border: 1px solid rgba(26,111,181,0.2); border-radius: 100px; padding: 8px 18px; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700; color: var(--blue); letter-spacing: 0.5px; margin-bottom: 20px; }
   .mes-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
   #loading { position: fixed; inset: 0; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 100; gap: 20px; }
@@ -237,8 +240,9 @@
         <tbody id="client-tbody"></tbody>
       </table>
     </div>
+    
     <div id="semana-cliente-wrap" style="display:none">
-      <div class="section-header" style="margin-top:8px"><h2>Eficiência por Dia da Semana</h2><div class="line"></div></div>
+      <div class="section-header" style="margin-top:24px"><h2>Eficiência Semanal — Ronda (Pistola)</h2><div class="line"></div></div>
       <div class="semana-wrap">
         <table id="tabela-semana">
           <thead><tr id="semana-header"></tr></thead>
@@ -246,6 +250,17 @@
         </table>
       </div>
     </div>
+
+    <div id="mesa-cliente-wrap" style="display:none">
+      <div class="section-header" style="margin-top:24px"><h2>Eficiência Semanal — Mesa RFID (Despachos)</h2><div class="line"></div></div>
+      <div class="semana-wrap">
+        <table id="tabela-mesa">
+          <thead><tr id="mesa-header"></tr></thead>
+          <tbody id="mesa-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div id="pecas-cliente-wrap" style="display:none">
       <div class="section-header" style="margin-top:8px"><h2>Peças Mais Evadidas</h2><div class="line"></div></div>
       <div class="pecas-grid">
@@ -274,11 +289,19 @@
 </main>
 
 <script>
-const SHEET_ID = '2PACX-1vTU9hUjM3qXPi08-gAAlnuOBqPtABLmrYJaJ1TrOx8J12YFoqdJXGukVptHxxqd84prEoeVTCNejfUy';
-const GIDS = { 'Visão_Geral': '211713039', 'Por_Cliente': '1630187568', 'Rondas': '1562548530', 'Rondas_Semana': '329455742', 'Pecas_Geral': '959213890', 'Pecas_Setor': '1154061757' };
+const SHEET_ID = '1uRYuofx9BZ2LfRrIw-mitaw99dbRsqfHYyR5W-PsG9I';
+const GIDS = { 
+  'Visão_Geral': '211713039', 
+  'Por_Cliente': '1630187568', 
+  'Rondas': '1562548530', 
+  'Rondas_Semana': '329455742', 
+  'Mesa_Semana': '123456789', // ⚠️ ATENÇÃO: Troque pelo GID real da sua aba 'Mesa_Semana' gerada na Web
+  'Pecas_Geral': '959213890', 
+  'Pecas_Setor': '1154061757' 
+};
 const BASE_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?output=csv&gid=`;
 
-let dadosGeral = [], dadosCliente = [], dadosRondas = [], dadosRondasSemana = [];
+let dadosGeral = [], dadosCliente = [], dadosRondas = [], dadosRondasSemana = [], dadosMesaSemana = [];
 let dadosPecasGeralParsed = [], dadosPecasSetorParsed = [];
 let chartEvasao, chartFin, chartPecas, chartCliEvasao, chartCliFin;
 
@@ -476,234 +499,283 @@ function renderRankings() {
   const meses = [...new Set(dadosRondas.map(d => d['Ano-Mês']))].sort();
   const mesAtual = meses[meses.length - 1];
   const dados = dadosRondas.filter(d => d['Ano-Mês'] === mesAtual);
-  const posCls = ['p1','p2','p3','pn','pn'];
+  
   const semRonda = [...dados].sort((a,b) => toNum(b['Dias de Atraso (Núm)']) - toNum(a['Dias de Atraso (Núm)'])).slice(0, 5);
-  document.getElementById('ranking-sem-ronda').innerHTML = semRonda.map((d, i) => {
+  let htmlSem = '';
+  semRonda.forEach((d, idx) => {
     const dias = toNum(d['Dias de Atraso (Núm)']);
-    const diasTexto = dias >= 60 ? '+60 dias' : `${dias} dias`;
-    const cor = dias >= 60 ? 'var(--red)' : dias >= 30 ? 'var(--orange)' : 'var(--yellow)';
-    return `<div class="ranking-item"><div class="ranking-pos ${posCls[i]}">${i+1}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:${cor}">${diasTexto}</div></div>`;
-  }).join('');
-  const comRonda = dados.filter(d => {
-    const s = d['Status Última Ronda'] || '';
-    const e = d['Eficiência da Ronda'] || '';
-    return !s.includes('Sem ronda') && !e.includes('S/ Equip') && e !== '-' && toNum(d['% Eficiência (Núm)']) > 0;
-  }).sort((a,b) => toNum(a['% Eficiência (Núm)']) - toNum(b['% Eficiência (Núm)'])).slice(0, 5);
-  document.getElementById('ranking-eficiencia').innerHTML = comRonda.length ? comRonda.map((d, i) => {
-    const efic = toNum(d['% Eficiência (Núm)']);
-    const cor = efic <= 40 ? 'var(--red)' : efic <= 60 ? 'var(--orange)' : 'var(--yellow)';
-    return `<div class="ranking-item"><div class="ranking-pos ${posCls[i]}">${i+1}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:${cor}">${d['Eficiência da Ronda']}</div></div>`;
-  }).join('') : '<div class="empty-state" style="padding:24px">Nenhum dado disponível</div>';
+    htmlSem += `
+      <div class="ranking-item">
+        <div class="ranking-pos ${idx < 3 ? 'p' + (idx+1) : 'pn'}">${idx + 1}</div>
+        <div class="ranking-nome">${d['Cliente']}</div>
+        <div class="ranking-val ${dias > 15 ? 'pct-vermelho' : 'pct-amarelo'}">${dias} dias</div>
+      </div>`;
+  });
+  document.getElementById('ranking-sem-ronda').innerHTML = htmlSem || '<div class="empty-state">Sem alertas</div>';
+
+  const pioresEfic = [...dados].filter(d => toNum(d['% Eficiência (Núm)']) > 0).sort((a,b) => toNum(a['% Eficiência (Núm)']) - toNum(b['% Eficiência (Núm)'])).slice(0, 5);
+  let htmlEfic = '';
+  pioresEfic.forEach((d, idx) => {
+    htmlEfic += `
+      <div class="ranking-item">
+        <div class="ranking-pos ${idx < 3 ? 'p' + (idx+1) : 'pn'}">${idx + 1}</div>
+        <div class="ranking-nome">${d['Cliente']}</div>
+        <div class="ranking-val ${corEficiencia(d['% Eficiência (Núm)'])}">${fmtPct(d['% Eficiência (Núm)'])}</div>
+      </div>`;
+  });
+  document.getElementById('ranking-eficiencia').innerHTML = htmlEfic || '<div class="empty-state">Sem alertas</div>';
 }
 
-function renderSelectCliente() {
+function populateClientesDropdown() {
   const sel = document.getElementById('select-cliente');
   const clientes = [...new Set(dadosCliente.map(d => d['Cliente']))].sort();
-  clientes.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.textContent = c; sel.appendChild(opt); });
-  if (clientes.length) { sel.value = clientes[0]; renderCliente(); }
+  clientes.forEach(c => {
+    const opt = document.createElement('option');
+    opt.value = c; opt.textContent = c;
+    sel.appendChild(opt);
+  });
 }
 
 function renderCliente() {
   const cliente = document.getElementById('select-cliente').value;
-  if (!cliente) return;
-  const dados = dadosCliente.filter(d => d['Cliente'] === cliente).sort((a,b) => a['Ano-Mês'].localeCompare(b['Ano-Mês']));
-  if (!dados.length) return;
-  const ultimo = dados[dados.length - 1];
+  if (!cliente) {
+    document.getElementById('client-cards').innerHTML = '';
+    document.getElementById('client-charts').style.display = 'none';
+    document.getElementById('client-table-wrap').style.display = 'none';
+    document.getElementById('semana-cliente-wrap').style.display = 'none';
+    document.getElementById('mesa-cliente-wrap').style.display = 'none';
+    document.getElementById('pecas-cliente-wrap').style.display = 'none';
+    return;
+  }
+
+  const rows = dadosCliente.filter(d => d['Cliente'] === cliente);
+  if (!rows.length) return;
+
+  rows.sort((a,b) => a['Mês'].localeCompare(b['Mês']));
+  const ultimo = rows[rows.length - 1];
+
+  // Renderização Dinâmica de 5 Cards (Adicionado o card da Mesa RFID)
   const evasao = toNum(ultimo['% Evasão']);
   let corCard = 'card-green', corVal = 'green';
   if (evasao > 2) { corCard = 'card-red'; corVal = 'red'; }
   else if (evasao > 1) { corCard = 'card-yellow'; corVal = 'yellow'; }
+
+  const statusRonda = ultimo['Status Última Ronda'] || 'Sem dados';
+  const efRonda = ultimo['Eficiência da Ronda'] || '-';
+  const statusMesa = ultimo['Status Mesa (Ontem)'] || 'Sem despachos';
+  const efMesa = ultimo['Eficiência Mesa'] || '-';
+
   document.getElementById('client-cards').innerHTML = `
     <div class="card ${corCard}">
-      <div class="card-label">% Evasão — Mês Atual</div>
+      <div class="card-label">% Evasão — ${fmtMes(ultimo['Mês'])}</div>
       <div class="card-value ${corVal}">${fmtPct(evasao)}</div>
-      <div class="card-sub">Mês atual</div>
+      <div class="card-sub">Ref: ${fmtNum(ultimo['Inventário'])} peças</div>
     </div>
     <div class="card card-red">
       <div class="card-label">Peças Evadidas</div>
       <div class="card-value red">${fmtNum(ultimo['Peças Evadidas'])}</div>
-      <div class="card-sub">de ${fmtNum(ultimo['Inventário'])} no inventário</div>
-    </div>
-    <div class="card card-yellow">
-      <div class="card-label">Impacto Financeiro</div>
-      <div class="card-value yellow" style="font-size:22px">${fmtMoney(toNum(ultimo['Perda Financeira (R$)']))}</div>
-      <div class="card-sub">Mês atual</div>
+      <div class="card-sub">Impacto: ${fmtMoney(ultimo['Perda Financeira (R$)'])}</div>
     </div>
     <div class="card card-blue">
-      <div class="card-label">Setores mais críticos do mês</div>
-      <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
-        ${[ultimo['1º Pior Setor'],ultimo['2º Pior Setor'],ultimo['3º Pior Setor']].filter(s=>s&&s!=='-').map((s,i)=>`<span class="badge badge-red">${i+1}º ${s}</span>`).join('')}
-      </div>
-    </div>`;
-  const labels = dados.map(d => fmtMes(d['Ano-Mês']));
-  document.getElementById('client-charts').style.display = 'grid';
+      <div class="card-label">Ronda Semanal (Pistola)</div>
+      <div class="card-value blue" style="font-size:20px; line-height:1.3; margin-top:5px">${efRonda}</div>
+      <div class="card-sub">${statusRonda}</div>
+    </div>
+    <div class="card card-green">
+      <div class="card-label">Mesa RFID (Despachos)</div>
+      <div class="card-value green" style="font-size:20px; line-height:1.3; margin-top:5px">${efMesa}</div>
+      <div class="card-sub">${statusMesa}</div>
+    </div>
+  `;
+
+  // Histórico da Tabela
+  let htmlBody = '';
+  rows.forEach(r => {
+    htmlBody += `
+      <tr>
+        <td>${fmtMes(r['Mês'])}</td>
+        <td>${fmtNum(r['Inventário'])}</td>
+        <td>${fmtNum(r['Peças Evadidas'])}</td>
+        <td class="${corEvasao(r['% Evasão'])}">${fmtPct(r['% Evasão'])}</td>
+        <td>${fmtMoney(r['Perda Financeira (R$)'])}</td>
+        <td><span class="badge badge-red">${r['1º Pior Setor'] || '-'}</span></td>
+        <td><span class="badge badge-orange">${r['2º Pior Setor'] || '-'}</span></td>
+        <td><span class="badge badge-yellow">${r['3º Pior Setor'] || '-'}</span></td>
+      </tr>`;
+  });
+  document.getElementById('client-tbody').innerHTML = htmlBody;
   document.getElementById('client-table-wrap').style.display = 'block';
-  document.getElementById('semana-cliente-wrap').style.display = 'block';
-  renderRondasSemanaCliente(cliente);
-  renderPecasCliente(cliente);
+
+  // Gráficos do Cliente
+  document.getElementById('client-charts').style.display = 'grid';
+  const labelsLabels = rows.map(r => fmtMes(r['Mês']));
   if (chartCliEvasao) chartCliEvasao.destroy();
-  chartCliEvasao = makeChart('chart-cli-evasao', 'line', labels, [{ data: dados.map(d => toNum(d['% Evasão'])), borderColor: '#1a6fb5', backgroundColor: 'rgba(26,111,181,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#1a6fb5', pointRadius: 5 }]);
+  chartCliEvasao = makeChart('chart-cli-evasao', 'line', labelsLabels, [{ data: rows.map(r => toNum(r['% Evasão'])), borderColor: '#1a6fb5', backgroundColor: 'rgba(26,111,181,0.05)', fill: true, tension: 0.3 }]);
   if (chartCliFin) chartCliFin.destroy();
-  chartCliFin = makeChart('chart-cli-fin', 'bar', labels, [{ data: dados.map(d => toNum(d['Perda Financeira (R$)'])), backgroundColor: 'rgba(245,166,35,0.8)', borderColor: '#f5a623', borderWidth: 1, borderRadius: 6 }]);
-  document.getElementById('client-tbody').innerHTML = dados.slice().reverse().map(d => {
-    const pct = toNum(d['% Evasão']); const cor = corEvasao(pct);
-    return `<tr><td><strong>${fmtMes(d['Ano-Mês'])}</strong></td><td>${fmtNum(d['Inventário'])}</td><td>${fmtNum(d['Peças Evadidas'])}</td><td><span class="${cor}">${fmtPct(pct)}</span></td><td>${fmtMoney(toNum(d['Perda Financeira (R$)']))}</td><td>${d['1º Pior Setor']||'-'}</td><td>${d['2º Pior Setor']||'-'}</td><td>${d['3º Pior Setor']||'-'}</td></tr>`;
-  }).join('');
+  chartCliFin = makeChart('chart-cli-fin', 'bar', labelsLabels, [{ data: rows.map(r => toNum(r['Perda Financeira (R$)'])), backgroundColor: '#f5a623' }]);
+
+  // Renderização das duas matrizes semanais (Ronda vs Mesa)
+  renderMatrizSemanal(dadosRondasSemana, cliente, 'semana-header', 'semana-tbody', 'semana-cliente-wrap');
+  renderMatrizSemanal(dadosMesaSemana, cliente, 'mesa-header', 'mesa-tbody', 'mesa-cliente-wrap');
+
+  // Peças Críticas
+  renderPecasCliente(cliente, ultimo['Mês']);
 }
 
-function renderPecasCliente(cliente) {
-  const wrapPecas = document.getElementById('pecas-cliente-wrap');
-  if (!wrapPecas) return;
-  const rankCls = ['r1','r2','r3','rn','rn'];
-
-  const rowGeral = dadosPecasGeralParsed.find(d => d.cliente === cliente);
-  const listaGeral = document.getElementById('pecas-geral-lista');
-  if (rowGeral) {
-    const html = rowGeral.pecas.filter(p => p.peca && p.peca !== '-').map((p, i) =>
-      `<div class="pecas-item">
-        <div class="pecas-rank ${rankCls[i]}">${i+1}</div>
-        <div class="pecas-nome">${p.peca}</div>
-        <div class="pecas-qtd">${p.qtd}</div>
-      </div>`).join('');
-    listaGeral.innerHTML = html || '<div class="empty-state" style="padding:20px">Sem dados</div>';
-  } else {
-    listaGeral.innerHTML = '<div class="empty-state" style="padding:20px">Sem dados disponíveis</div>';
-  }
-
-  const rowsSetor = dadosPecasSetorParsed.filter(d => d.cliente === cliente).sort((a,b) => a.rank - b.rank);
-  const tabsEl = document.getElementById('setores-tabs');
-  const contEl = document.getElementById('setores-conteudo');
-  if (rowsSetor.length) {
-    tabsEl.innerHTML = rowsSetor.map((r, i) =>
-      `<button class="setor-tab ${i===0?'active':''}" onclick="switchSetor(${i}, this)">${r.setor}</button>`).join('');
-    contEl.innerHTML = rowsSetor.map((r, i) => {
-      const items = r.pecas.filter(p => p.peca && p.peca !== '-').map((p, idx) =>
-        `<div class="pecas-item">
-          <div class="pecas-rank ${rankCls[idx]}">${idx+1}</div>
-          <div class="pecas-nome">${p.peca}</div>
-          <div class="pecas-qtd">${p.qtd}</div>
-        </div>`).join('');
-      return `<div class="setor-content ${i===0?'active':''}" id="setor-tab-${i}">${items || '<div class="empty-state" style="padding:20px">Sem dados</div>'}</div>`;
-    }).join('');
-  } else {
-    tabsEl.innerHTML = '';
-    contEl.innerHTML = '<div class="empty-state" style="padding:20px">Sem dados de setores disponíveis</div>';
-  }
-  wrapPecas.style.display = 'block';
-}
-
-function switchSetor(idx, btn) {
-  document.querySelectorAll('.setor-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.setor-content').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  const el = document.getElementById('setor-tab-' + idx);
-  if (el) el.classList.add('active');
-}
-
-function renderRondasSemanaCliente(cliente) {
-  if (!dadosRondasSemana.length) return;
-  const row = dadosRondasSemana.find(d => d['Cliente'] === cliente);
-  const header = document.getElementById('semana-header');
-  const tbody = document.getElementById('semana-tbody');
-  if (!header || !tbody) return;
-  const colunas = Object.keys(dadosRondasSemana[0]).filter(k => k !== 'Cliente');
-  header.innerHTML = '<th style="text-align:left">Cliente</th>' + colunas.map(d => {
-    const dia = diaSemana(d); const dd = d.substring(0,5);
-    return `<th>${dia}<br><span style="font-weight:500;opacity:0.8;font-size:9px">${dd}</span></th>`;
-  }).join('');
-  if (!row) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sem dados semanais para este cliente</td></tr>';
+function renderMatrizSemanal(matriz, cliente, headerId, tbodyId, wrapId) {
+  if (!matriz || matriz.length < 2) {
+    document.getElementById(wrapId).style.display = 'none';
     return;
   }
-  const cells = colunas.map(d => {
-    const val = row[d] || '-'; const cls = corEficDia(val);
-    return `<td><span class="${cls}">${val === '-' ? '—' : val}</span></td>`;
-  }).join('');
-  tbody.innerHTML = `<tr><td style="text-align:left"><strong>${row['Cliente']}</strong></td>${cells}</tr>`;
+  const headers = matriz[0];
+  const rowCli = matriz.slice(1).find(r => r[0] && r[0].toUpperCase() === cliente.toUpperCase());
+
+  if (!rowCli) {
+    document.getElementById(wrapId).style.display = 'none';
+    return;
+  }
+
+  let hHtml = '<th>Tipo / Dias</th>';
+  for (let i = 1; i < headers.length; i++) { hHtml += `<th>${headers[i]}</th>`; }
+  document.getElementById(headerId).innerHTML = hHtml;
+
+  let bHtml = `<tr><td><strong>Eficiência</strong></td>`;
+  for (let i = 1; i < rowCli.length; i++) {
+    const val = rowCli[i] || '-';
+    let cls = 'efic-dia-vazio';
+    if (val.includes('%')) {
+      const pct = parseFloat(val);
+      if (pct <= 40) cls = 'efic-dia-vermelho';
+      else if (pct <= 60) cls = 'efic-dia-laranja';
+      else if (pct <= 80) cls = 'efic-dia-amarelo';
+      else cls = 'efic-dia-verde';
+    }
+    bHtml += `<td><span class="${cls}">${val}</span></td>`;
+  }
+  bHtml += `</tr>`;
+  document.getElementById(tbodyId).innerHTML = bHtml;
+  document.getElementById(wrapId).style.display = 'block';
 }
 
-function corEficDia(val) {
-  if (val === '-' || val === '') return 'efic-dia-vazio';
-  if (val === 'S/ Equip') return 'efic-dia-verde';
-  const m = val.match(/^([\d.]+)%/);
-  if (!m) return 'efic-dia-vazio';
-  const v = parseFloat(m[1]);
-  if (v === 0) return 'efic-dia-vazio';
-  if (v <= 40) return 'efic-dia-vermelho';
-  if (v <= 60) return 'efic-dia-laranja';
-  if (v <= 80) return 'efic-dia-amarelo';
-  return 'efic-dia-verde';
+function renderPecasCliente(cliente, mesFoco) {
+  const wrap = document.getElementById('pecas-cliente-wrap');
+  const dadosG = dadosPecasGeralParsed.find(d => d.cliente === cliente && d.mes === mesFoco);
+  let htmlG = '';
+  if (dadosG && dadosG.pecas.length) {
+    dadosG.pecas.forEach((p, idx) => {
+      if(p.peca === '-') return;
+      htmlG += `
+        <div class="pecas-item">
+          <div class="pecas-rank r${idx+1}">${idx+1}</div>
+          <div class="pecas-nome">${p.peca}</div>
+          <div class="pecas-qtd">${p.qtd} <span style="font-size:10px;color:var(--text-muted);font-weight:400">unid. (${fmtMoney(p.preco)})</span></div>
+        </div>`;
+    });
+  }
+  document.getElementById('pecas-geral-lista').innerHTML = htmlG || '<div class="empty-state">Sem dados de peças</div>';
+
+  const dadosS = dadosPecasSetorParsed.filter(d => d.cliente === cliente && d.mes === mesFoco);
+  const tabsEl = document.getElementById('setores-tabs');
+  const contEl = document.getElementById('setores-conteudo');
+  tabsEl.innerHTML = ''; contEl.innerHTML = '';
+
+  if (dadosS.length) {
+    dadosS.sort((a,b) => a.rank - b.rank);
+    dadosS.forEach((s, idx) => {
+      const tabId = `tab-setor-${idx}`;
+      const btn = document.createElement('button');
+      btn.className = `setor-tab ${idx === 0 ? 'active' : ''}`;
+      btn.textContent = s.setor;
+      btn.onclick = () => {
+        document.querySelectorAll('.setor-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.setor-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(tabId).classList.add('active');
+      };
+      tabsEl.appendChild(btn);
+
+      let htmlItems = '';
+      s.pecas.forEach((p, pIdx) => {
+        if(p.peca === '-') return;
+        htmlItems += `
+          <div class="pecas-item">
+            <div class="pecas-rank r${pIdx+1}">${pIdx+1}</div>
+            <div class="pecas-nome">${p.peca}</div>
+            <div class="pecas-qtd">${p.qtd} <span style="font-size:10px;color:var(--text-muted);font-weight:400">unid.</span></div>
+          </div>`;
+      });
+      const div = document.createElement('div');
+      div.id = tabId; div.className = `setor-content ${idx === 0 ? 'active' : ''}`;
+      div.innerHTML = htmlItems || '<div class="empty-state">Sem dados</div>';
+      contEl.appendChild(div);
+    });
+  } else {
+    contEl.innerHTML = '<div class="empty-state">Sem dados por setor</div>';
+  }
+  wrap.style.display = 'block';
 }
 
-function diaSemana(dataStr) {
-  const [d, m, a] = dataStr.split('/');
-  const dt = new Date(parseInt(a), parseInt(m)-1, parseInt(d));
-  return ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][dt.getDay()];
-}
-
-function renderRondas() {
+function renderRondasTab() {
+  if (!dadosRondas.length) return;
   const meses = [...new Set(dadosRondas.map(d => d['Ano-Mês']))].sort();
   const mesAtual = meses[meses.length - 1];
-  const indicador = document.getElementById('mes-ronda-indicator');
-  if (mesAtual) indicador.innerHTML = `<span></span> Período de referência: ${fmtMes(mesAtual)}`;
-  const dados = dadosRondas.filter(d => d['Ano-Mês'] === mesAtual).sort((a,b) => toNum(b['Dias de Atraso (Núm)']) - toNum(a['Dias de Atraso (Núm)']));
-  const tbody = document.getElementById('rondas-tbody');
-  if (!dados.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhum dado encontrado</td></tr>'; return; }
-  tbody.innerHTML = dados.map(d => {
-    const dias = toNum(d['Dias de Atraso (Núm)']);
-    const efic = toNum(d['% Eficiência (Núm)']);
-    const status = d['Status Última Ronda'] || '-';
-    const semRonda = status.includes('Sem ronda') || status === 'Sem dados' || status === '-';
-    let statusFormatado = 'S/ Ronda no período';
-    if (!semRonda) {
-      const match = status.match(/(\d{2})\/(\d{2})\/(\d{4})/);
-      if (match) {
-        const diasNomes = ['domingo','segunda-feira','terça-feira','quarta-feira','quinta-feira','sexta-feira','sábado'];
-        const dt = new Date(parseInt(match[3]), parseInt(match[2])-1, parseInt(match[1]));
-        statusFormatado = match[1] + '/' + match[2] + ' (' + diasNomes[dt.getDay()] + ')';
-      } else { statusFormatado = status; }
-    }
-    const diasTexto = dias >= 60 ? '+60 dias' : `${dias} dias`;
-    const situacao = badgeSituacao(dias);
-    const corEfic = corEficiencia(efic);
-    return `<tr><td><strong>${d['Cliente']}</strong></td><td style="font-size:13px">${statusFormatado}</td><td><span class="${corEfic}">${d['Eficiência da Ronda']||'-'}</span></td><td><strong>${diasTexto}</strong></td><td><span class="badge ${situacao.cls}">${situacao.label}</span></td></tr>`;
-  }).join('');
+  document.getElementById('mes-ronda-indicator').innerHTML = `<span></span> Período de referência: <strong>${fmtMes(mesAtual)}</strong>`;
+  
+  const dados = dadosRondas.filter(d => d['Ano-Mês'] === mesAtual);
+  let html = '';
+  dados.forEach(r => {
+    const badge = badgeSituacao(r['Dias de Atraso (Núm)']);
+    html += `
+      <tr>
+        <td><strong>${r['Cliente']}</strong></td>
+        <td>${r['Última Ronda'] || '-'}</td>
+        <td class="${corEficiencia(r['% Eficiência (Núm)'])}">${fmtPct(r['% Eficiência (Núm)'])}</td>
+        <td>${r['Dias de Atraso (Núm)']} dias</td>
+        <td><span class="badge ${badge.cls}">${badge.label}</span></td>
+      </tr>`;
+  });
+  document.getElementById('rondas-tbody').innerHTML = html;
 }
 
 async function init() {
   try {
-    const [txtGeral, txtCliente, txtRondas, txtSemana, txtPecasG, txtPecasS] = await Promise.all([
-      fetch(`${BASE_URL}${GIDS['Visão_Geral']}`).then(r => r.text()),
-      fetch(`${BASE_URL}${GIDS['Por_Cliente']}`).then(r => r.text()),
-      fetch(`${BASE_URL}${GIDS['Rondas']}`).then(r => r.text()),
-      fetch(`${BASE_URL}${GIDS['Rondas_Semana']}`).then(r => r.text()),
-      fetch(`${BASE_URL}${GIDS['Pecas_Geral']}`).then(r => r.text()),
-      fetch(`${BASE_URL}${GIDS['Pecas_Setor']}`).then(r => r.text()),
+    const [resGeral, resCliente, resRondas, resRondasSemana, resMesaSemana, resPecasGeral, resPecasSetor] = await Promise.all([
+      fetch(BASE_URL + GIDS['Visão_Geral']).then(r => r.text()),
+      fetch(BASE_URL + GIDS['Por_Cliente']).then(r => r.text()),
+      fetch(BASE_URL + GIDS['Rondas']).then(r => r.text()),
+      fetch(BASE_URL + GIDS['Rondas_Semana']).then(r => r.text()),
+      fetch(BASE_URL + GIDS['Mesa_Semana']).then(r => r.text()).catch(() => ''), 
+      fetch(BASE_URL + GIDS['Pecas_Geral']).then(r => r.text()),
+      fetch(BASE_URL + GIDS['Pecas_Setor']).then(r => r.text())
     ]);
 
-    dadosGeral      = parseCSVText(txtGeral);
-    dadosCliente    = parseCSVText(txtCliente);
-    dadosRondas     = parseCSVText(txtRondas);
-    dadosRondasSemana = parseCSVText(txtSemana);
-    dadosPecasGeralParsed = parsePecasGeral(parseCSVRaw(txtPecasG));
-    dadosPecasSetorParsed = parsePecasSetor(parseCSVRaw(txtPecasS));
+    dadosGeral = parseCSVText(resGeral);
+    dadosCliente = parseCSVText(resCliente);
+    dadosRondas = parseCSVText(resRondas);
+    
+    dadosRondasSemana = parseCSVRaw(resRondasSemana);
+    dadosMesaSemana = resMesaSemana ? parseCSVRaw(resMesaSemana) : [];
+    
+    dadosPecasGeralParsed = parsePecasGeral(parseCSVRaw(resPecasGeral));
+    dadosPecasSetorParsed = parsePecasSetor(parseCSVRaw(resPecasSetor));
 
-    // Badge de frescor — usa Data Extração da Pecas_Geral (sempre atualizada pelo robo)
-    if (dadosPecasGeralParsed.length) {
-      const ultimaData = dadosPecasGeralParsed[dadosPecasGeralParsed.length - 1].dataExtracao;
-      if (ultimaData) renderDataFreshness(ultimaData);
+    if(dadosCliente.length > 0) {
+      renderDataFreshness(dadosCliente[dadosCliente.length - 1]['Data Extração']);
     }
 
     renderVisaoGeral();
     renderRankings();
-    renderSelectCliente();
-    renderRondas();
+    populateClientesDropdown();
+    renderRondasTab();
+
     document.getElementById('loading').style.display = 'none';
-  } catch(e) {
-    document.getElementById('loading').innerHTML = `<div style="color:#e53935;font-family:Montserrat;font-size:14px;font-weight:700;letter-spacing:2px">ERRO AO CARREGAR DADOS</div><div style="color:#5a7a96;font-size:12px;margin-top:8px">${e.message}</div>`;
+  } catch (err) {
+    console.error(err);
+    alert('Erro ao carregar dados do Planilhas Google.');
   }
 }
-init();
+
+window.onload = init;
 </script>
 </body>
 </html>
