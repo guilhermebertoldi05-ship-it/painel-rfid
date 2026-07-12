@@ -231,6 +231,23 @@
         <div id="ranking-eficiencia"></div>
       </div>
     </div>
+    <div class="section-header"><h2>Melhores Desempenhos do Mês</h2><div class="line"></div></div>
+    <div class="ranking-grid">
+      <div class="ranking-box">
+        <div class="ranking-header">
+          <div class="ranking-header-icon" style="background:var(--green-light)">🏆</div>
+          <div><h3>Menor % de evasão</h3><p>Top 5 — melhor desempenho no mês</p></div>
+        </div>
+        <div id="ranking-menor-evasao"></div>
+      </div>
+      <div class="ranking-box">
+        <div class="ranking-header">
+          <div class="ranking-header-icon" style="background:var(--green-light)">📦</div>
+          <div><h3>Menos peças evadidas</h3><p>Top 5 — menor volume evadido no mês</p></div>
+        </div>
+        <div id="ranking-menos-pecas"></div>
+      </div>
+    </div>
   </div>
 
   <div id="por-cliente" class="tab-content">
@@ -545,6 +562,28 @@ function renderRankings() {
     const cor = efic <= 40 ? 'var(--red)' : efic <= 60 ? 'var(--orange)' : 'var(--yellow)';
     return `<div class="ranking-item"><div class="ranking-pos ${posCls[i]}">${i+1}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:${cor}">${d['Eficiência da Ronda']}</div></div>`;
   }).join('') : '<div class="empty-state" style="padding:24px">Nenhum dado disponível</div>';
+}
+
+function renderRankingsPositivos() {
+  if (!dadosCliente.length) return;
+  const meses = [...new Set(dadosCliente.map(d => d['Ano-Mês']))].sort();
+  const mesAtual = meses[meses.length - 1];
+  const dados = dadosCliente.filter(d => d['Ano-Mês'] === mesAtual);
+  const posCls = ['p1','p2','p3','pn','pn'];
+
+  const porEvasao = dados.filter(d => toNum(d['% Evasão']) > 0)
+    .sort((a,b) => toNum(a['% Evasão']) - toNum(b['% Evasão']))
+    .slice(0, 5);
+  document.getElementById('ranking-menor-evasao').innerHTML = porEvasao.length ? porEvasao.map((d, i) =>
+    `<div class="ranking-item"><div class="ranking-pos ${posCls[i]}">${i+1}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:var(--green)">${fmtPct(toNum(d['% Evasão']))}</div></div>`
+  ).join('') : '<div class="empty-state" style="padding:24px">Nenhum dado disponível</div>';
+
+  const porPecas = dados.filter(d => toNum(d['Peças Evadidas']) > 0)
+    .sort((a,b) => toNum(a['Peças Evadidas']) - toNum(b['Peças Evadidas']))
+    .slice(0, 5);
+  document.getElementById('ranking-menos-pecas').innerHTML = porPecas.length ? porPecas.map((d, i) =>
+    `<div class="ranking-item"><div class="ranking-pos ${posCls[i]}">${i+1}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:var(--green)">${fmtNum(toNum(d['Peças Evadidas']))} peças</div></div>`
+  ).join('') : '<div class="empty-state" style="padding:24px">Nenhum dado disponível</div>';
 }
 
 function renderSelectCliente() {
@@ -891,6 +930,7 @@ async function init() {
 
     renderVisaoGeral();
     renderRankings();
+    renderRankingsPositivos();
     renderSelectCliente();
     renderRondas();
     document.getElementById('loading').style.display = 'none';
