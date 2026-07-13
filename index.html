@@ -234,18 +234,26 @@
     <div class="section-header"><h2>Melhores Desempenhos do Mês</h2><div class="line"></div></div>
     <div class="ranking-grid">
       <div class="ranking-box">
-        <div class="ranking-header">
-          <div class="ranking-header-icon" style="background:var(--green-light)">🏆</div>
-          <div><h3>Menor % de evasão</h3><p>Top 5 — melhor desempenho no mês</p></div>
+        <div class="ranking-header" style="justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="ranking-header-icon" style="background:var(--green-light)">🏆</div>
+            <div><h3>Menor % de evasão</h3><p>Top 5 — melhor desempenho no mês</p></div>
+          </div>
+          <button class="btn-expandir" id="btn-ver-tudo-evasao" onclick="toggleVerTudoEvasao()">Ver tudo</button>
         </div>
         <div id="ranking-menor-evasao"></div>
+        <div class="curtain" id="ranking-menor-evasao-resto"></div>
       </div>
       <div class="ranking-box">
-        <div class="ranking-header">
-          <div class="ranking-header-icon" style="background:var(--green-light)">📦</div>
-          <div><h3>Menos peças evadidas</h3><p>Top 5 — menor volume evadido no mês</p></div>
+        <div class="ranking-header" style="justify-content:space-between">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="ranking-header-icon" style="background:var(--green-light)">📦</div>
+            <div><h3>Menos peças evadidas</h3><p>Top 5 — menor volume evadido no mês</p></div>
+          </div>
+          <button class="btn-expandir" id="btn-ver-tudo-pecas-menos" onclick="toggleVerTudoPecasMenos()">Ver tudo</button>
         </div>
         <div id="ranking-menos-pecas"></div>
+        <div class="curtain" id="ranking-menos-pecas-resto"></div>
       </div>
     </div>
   </div>
@@ -572,18 +580,58 @@ function renderRankingsPositivos() {
   const posCls = ['p1','p2','p3','pn','pn'];
 
   const porEvasao = dados.filter(d => toNum(d['% Evasão']) > 0)
-    .sort((a,b) => toNum(a['% Evasão']) - toNum(b['% Evasão']))
-    .slice(0, 5);
-  document.getElementById('ranking-menor-evasao').innerHTML = porEvasao.length ? porEvasao.map((d, i) =>
+    .sort((a,b) => toNum(a['% Evasão']) - toNum(b['% Evasão']));
+  document.getElementById('ranking-menor-evasao').innerHTML = porEvasao.length ? porEvasao.slice(0, 5).map((d, i) =>
     `<div class="ranking-item"><div class="ranking-pos ${posCls[i]}">${i+1}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:var(--green)">${fmtPct(toNum(d['% Evasão']))}</div></div>`
   ).join('') : '<div class="empty-state" style="padding:24px">Nenhum dado disponível</div>';
+  const restoEvasaoEl = document.getElementById('ranking-menor-evasao-resto');
+  const btnEvasao = document.getElementById('btn-ver-tudo-evasao');
+  if (porEvasao.length > 5) {
+    restoEvasaoEl.innerHTML = porEvasao.slice(5).map((d, i) =>
+      `<div class="ranking-item"><div class="ranking-pos pn">${i+6}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:var(--green)">${fmtPct(toNum(d['% Evasão']))}</div></div>`
+    ).join('');
+    btnEvasao.style.display = '';
+  } else {
+    restoEvasaoEl.innerHTML = '';
+    btnEvasao.style.display = 'none';
+  }
+  restoEvasaoEl.classList.remove('open');
+  btnEvasao.textContent = 'Ver tudo';
 
   const porPecas = dados.filter(d => toNum(d['Peças Evadidas']) > 0)
-    .sort((a,b) => toNum(a['Peças Evadidas']) - toNum(b['Peças Evadidas']))
-    .slice(0, 5);
-  document.getElementById('ranking-menos-pecas').innerHTML = porPecas.length ? porPecas.map((d, i) =>
+    .sort((a,b) => toNum(a['Peças Evadidas']) - toNum(b['Peças Evadidas']));
+  document.getElementById('ranking-menos-pecas').innerHTML = porPecas.length ? porPecas.slice(0, 5).map((d, i) =>
     `<div class="ranking-item"><div class="ranking-pos ${posCls[i]}">${i+1}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:var(--green)">${fmtNum(toNum(d['Peças Evadidas']))} peças</div></div>`
   ).join('') : '<div class="empty-state" style="padding:24px">Nenhum dado disponível</div>';
+  const restoPecasEl = document.getElementById('ranking-menos-pecas-resto');
+  const btnPecas = document.getElementById('btn-ver-tudo-pecas-menos');
+  if (porPecas.length > 5) {
+    restoPecasEl.innerHTML = porPecas.slice(5).map((d, i) =>
+      `<div class="ranking-item"><div class="ranking-pos pn">${i+6}</div><div class="ranking-nome">${d['Cliente']}</div><div class="ranking-val" style="color:var(--green)">${fmtNum(toNum(d['Peças Evadidas']))} peças</div></div>`
+    ).join('');
+    btnPecas.style.display = '';
+  } else {
+    restoPecasEl.innerHTML = '';
+    btnPecas.style.display = 'none';
+  }
+  restoPecasEl.classList.remove('open');
+  btnPecas.textContent = 'Ver tudo';
+}
+
+function toggleVerTudoEvasao() {
+  const el = document.getElementById('ranking-menor-evasao-resto');
+  const btn = document.getElementById('btn-ver-tudo-evasao');
+  const abrir = !el.classList.contains('open');
+  el.classList.toggle('open', abrir);
+  btn.textContent = abrir ? 'Ver menos' : 'Ver tudo';
+}
+
+function toggleVerTudoPecasMenos() {
+  const el = document.getElementById('ranking-menos-pecas-resto');
+  const btn = document.getElementById('btn-ver-tudo-pecas-menos');
+  const abrir = !el.classList.contains('open');
+  el.classList.toggle('open', abrir);
+  btn.textContent = abrir ? 'Ver menos' : 'Ver tudo';
 }
 
 function renderSelectCliente() {
