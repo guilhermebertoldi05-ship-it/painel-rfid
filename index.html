@@ -262,6 +262,7 @@
     <div class="filter-bar">
       <span class="filter-label">Cliente</span>
       <select id="select-cliente" onchange="renderCliente()"><option value="">Selecione um cliente...</option></select>
+      <div class="header-data-badge" id="cliente-freshness" style="margin-left:auto"><span class="dot"></span> Carregando...</div>
     </div>
     <div class="client-detail" id="client-cards"></div>
     <div class="curtain" id="financeiro-detalhe-wrap">
@@ -434,32 +435,42 @@ function makeChart(id, type, labels, datasets) {
   }});
 }
 
-function renderDataFreshness(dataExtracaoStr) {
-  const badge = document.getElementById('dados-freshness');
-  if (!dataExtracaoStr) {
-    badge.className = 'header-data-badge stale';
-    badge.innerHTML = '<span class="dot"></span> Sem dados';
-    return;
-  }
+function parseDataExtracao(dataExtracaoStr) {
+  if (!dataExtracaoStr) return null;
   const partes = dataExtracaoStr.split(' ');
   const [dia, mes, ano] = partes[0].split('/');
   const [hora, min] = (partes[1] || '00:00').split(':');
-  const dtExtracao = new Date(parseInt(ano), parseInt(mes)-1, parseInt(dia), parseInt(hora), parseInt(min));
+  const dt = new Date(parseInt(ano), parseInt(mes)-1, parseInt(dia), parseInt(hora), parseInt(min));
+  return isNaN(dt.getTime()) ? null : dt;
+}
+
+function calcFreshness(dtExtracao) {
+  if (!dtExtracao) return { texto: 'Sem dados', cls: 'stale' };
   const agora = new Date();
   const diffHoras = (agora - dtExtracao) / (1000 * 60 * 60);
   const diffDias = Math.floor(diffHoras / 24);
+  const horaTxt = String(dtExtracao.getHours()).padStart(2, '0') + ':' + String(dtExtracao.getMinutes()).padStart(2, '0');
+  const diaTxt = String(dtExtracao.getDate()).padStart(2, '0') + '/' + String(dtExtracao.getMonth() + 1).padStart(2, '0');
 
-  let texto, cls;
-  if (diffHoras < 12) {
-    texto = `Atualizado hoje às ${partes[1] || ''}`;
-    cls = '';
-  } else if (diffDias < 2) {
-    texto = `Atualizado ontem às ${partes[1] || ''}`;
-    cls = 'stale';
-  } else {
-    texto = `Desatualizado — ${diffDias} dias sem rodar`;
-    cls = 'very-stale';
-  }
+  if (diffHoras < 12) return { texto: `Atualizado hoje às ${horaTxt}`, cls: '' };
+  if (diffDias < 2) return { texto: `Atualizado ontem às ${horaTxt}`, cls: 'stale' };
+  if (diffDias < 7) return { texto: `Atualizado em ${diaTxt} às ${horaTxt}`, cls: 'very-stale' };
+  return { texto: `Desatualizado — ${diffDias} dias sem rodar`, cls: 'very-stale' };
+}
+
+function renderDataFreshness(dtExtracao) {
+  const badge = document.getElementById('dados-freshness');
+  const { texto, cls } = calcFreshness(dtExtracao);
+  badge.className = 'header-data-badge' + (cls ? ' ' + cls : '');
+  badge.innerHTML = `<span class="dot"></span> ${texto}`;
+}
+
+function renderClienteFreshness(cliente) {
+  const badge = document.getElementById('cliente-freshness');
+  if (!badge) return;
+  const row = dadosPecasGeralParsed.find(d => d.cliente === cliente);
+  const dtExtracao = row ? parseDataExtracao(row.dataExtracao) : null;
+  const { texto, cls } = calcFreshness(dtExtracao);
   badge.className = 'header-data-badge' + (cls ? ' ' + cls : '');
   badge.innerHTML = `<span class="dot"></span> ${texto}`;
 }
@@ -675,6 +686,7 @@ function renderCliente() {
       </div>
     </div>`;
   renderDetalheFinanceiro(cliente);
+  renderClienteFreshness(cliente);
   const labels = dados.map(d => fmtMes(d['Ano-Mês']));
   document.getElementById('client-charts').style.display = 'grid';
   document.getElementById('client-table-wrap').style.display = 'block';
@@ -970,10 +982,14 @@ async function init() {
     dadosPecasGeralFull = parseCSVText(txtPecasGFull);
     dadosPecasSetorFull = parseCSVText(txtPecasSFull);
 
-    // Badge de frescor — usa Data Extração da Pecas_Geral (sempre atualizada pelo robo)
-    if (dadosPecasGeralParsed.length) {
-      const ultimaData = dadosPecasGeralParsed[dadosPecasGeralParsed.length - 1].dataExtracao;
-      if (ultimaData) renderDataFreshness(ultimaData);
+    // Badge de frescor global — maior "Data Extração" entre TODOS os clientes de Pecas_Geral,
+    // não a última linha da planilha (uma rodada parcial de 1 cliente não deve aparentar ter
+    // atualizado todo mundo). O badge por cliente (aba Por Cliente) usa a data daquele cliente.
+    const datasExtracao = dadosPecasGeralParsed.map(d => parseDataExtracao(d.dataExtracao)).filter(Boolean);
+    if (datasExtracao.length) {
+      renderDataFreshness(new Date(Math.max(...datasExtracao.map(d => d.getTime()))));
+    } else {
+      renderDataFreshness(null);
     }
 
     renderVisaoGeral();
