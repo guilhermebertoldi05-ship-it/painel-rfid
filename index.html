@@ -7,6 +7,16 @@
 <link rel="icon" type="image/png" href="favicon.png">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script>
+  // Aplica o tema salvo antes da primeira pintura, pra evitar flash de tela clara.
+  (function() {
+    try {
+      if (localStorage.getItem('robo-rfid-theme') === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    } catch (e) {}
+  })();
+</script>
 <style>
   :root {
     --bg: #f0f4f8;
@@ -25,9 +35,25 @@
     --yellow: #f5a623;
     --yellow-light: #fef8ec;
     --orange: #f07130;
+    --orange-light: #fff3ed;
     --shadow: 0 2px 12px rgba(26,111,181,0.10);
     --shadow-md: 0 4px 24px rgba(26,111,181,0.13);
     --radius: 14px;
+  }
+  :root[data-theme="dark"] {
+    --bg: #0e1621;
+    --surface: #16212f;
+    --surface2: #1c2937;
+    --border: #2a3b4d;
+    --blue-light: rgba(26,111,181,0.18);
+    --green-light: rgba(61,168,74,0.18);
+    --red-light: rgba(229,57,53,0.18);
+    --yellow-light: rgba(245,166,35,0.18);
+    --orange-light: rgba(240,113,48,0.18);
+    --text: #e8eef5;
+    --text-muted: #93a9c0;
+    --shadow: 0 2px 12px rgba(0,0,0,0.35);
+    --shadow-md: 0 4px 24px rgba(0,0,0,0.45);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
@@ -38,11 +64,13 @@
   .header-logo-divider { width: 2px; height: 36px; background: linear-gradient(180deg, var(--blue), var(--green)); border-radius: 2px; }
   .header-title h1 { font-family: 'Montserrat', sans-serif; font-size: 17px; font-weight: 800; color: var(--blue-dark); letter-spacing: -0.3px; line-height: 1.2; }
   .header-title p { font-size: 10px; color: var(--text-muted); letter-spacing: 1.5px; text-transform: uppercase; font-weight: 500; margin-top: 2px; }
-  .header-right { display: flex; align-items: center; }
+  .header-right { display: flex; align-items: center; gap: 12px; }
   .header-data-badge { background: var(--green-light); color: var(--green); border: 1px solid rgba(61,168,74,0.2); border-radius: 100px; padding: 7px 16px; font-size: 11px; font-weight: 700; letter-spacing: 0.3px; display: flex; align-items: center; gap: 6px; }
   .header-data-badge.stale { background: var(--yellow-light); color: var(--yellow); border-color: rgba(245,166,35,0.3); }
   .header-data-badge.very-stale { background: var(--red-light); color: var(--red); border-color: rgba(229,57,53,0.3); }
   .header-data-badge span.dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+  .theme-toggle-btn { width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%; border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted); font-size: 15px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.2s, color 0.2s; }
+  .theme-toggle-btn:hover { background: var(--blue-light); color: var(--blue); transform: scale(1.06); }
   .tabs { position: relative; z-index: 10; display: flex; gap: 2px; padding: 0 40px; background: var(--surface); border-bottom: 1px solid var(--border); }
   .tab { padding: 14px 28px; font-family: 'Montserrat', sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-muted); cursor: pointer; border: none; background: transparent; border-bottom: 3px solid transparent; transition: all 0.2s; position: relative; bottom: -1px; }
   .tab:hover { color: var(--blue); }
@@ -92,8 +120,8 @@
   .badge-green { background: var(--green-light); color: var(--green); }
   .badge-yellow { background: var(--yellow-light); color: var(--yellow); }
   .badge-blue { background: var(--blue-light); color: var(--blue); }
-  .badge-orange { background: #fff3ed; color: var(--orange); }
-  .badge-gray { background: #f0f4f8; color: var(--text-muted); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-gray { background: var(--surface2); color: var(--text-muted); }
   .client-detail { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
   .mes-indicator { display: inline-flex; align-items: center; gap: 8px; background: var(--blue-light); border: 1px solid rgba(26,111,181,0.2); border-radius: 100px; padding: 8px 18px; font-family: 'Montserrat', sans-serif; font-size: 12px; font-weight: 700; color: var(--blue); letter-spacing: 0.5px; margin-bottom: 20px; }
   .mes-indicator span { width: 7px; height: 7px; border-radius: 50%; background: var(--blue); flex-shrink: 0; }
@@ -129,11 +157,11 @@
   .ranking-val { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; }
   .semana-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); margin-bottom: 24px; }
   .semana-wrap table th { background: linear-gradient(135deg, var(--blue-dark), var(--blue)); color: rgba(255,255,255,0.9); }
-  .efic-dia-vermelho { background: #fdecea; color: var(--red); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
-  .efic-dia-laranja { background: #fff3ed; color: var(--orange); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
+  .efic-dia-vermelho { background: var(--red-light); color: var(--red); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
+  .efic-dia-laranja { background: var(--orange-light); color: var(--orange); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
   .efic-dia-amarelo { background: var(--yellow-light); color: var(--yellow); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
   .efic-dia-verde { background: var(--green-light); color: var(--green); font-weight: 700; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
-  .efic-dia-vazio { background: #f0f4f8; color: var(--text-muted); font-weight: 500; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
+  .efic-dia-vazio { background: var(--surface2); color: var(--text-muted); font-weight: 500; border-radius: 6px; padding: 3px 8px; font-size: 11px; display:inline-block; }
   .pecas-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 8px; }
   .pecas-box { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
   .pecas-header { padding: 14px 20px; background: linear-gradient(135deg, var(--blue-dark), var(--blue)); display: flex; align-items: center; gap: 10px; }
@@ -190,6 +218,7 @@
   </div>
   <div class="header-right">
     <div class="header-data-badge" id="dados-freshness"><span class="dot"></span> Carregando...</div>
+    <button class="theme-toggle-btn" id="theme-toggle" onclick="toggleTheme()" title="Alternar tema claro/escuro" aria-label="Alternar tema claro/escuro">🌙</button>
   </div>
 </header>
 <div class="tabs">
@@ -426,12 +455,20 @@ function showTab(id, btn) {
   document.getElementById(id).classList.add('active');
   btn.classList.add('active');
 }
+function obterCoresGrafico() {
+  const escuro = document.documentElement.getAttribute('data-theme') === 'dark';
+  return escuro
+    ? { tick: '#93a9c0', grid: 'rgba(255,255,255,0.08)', tooltipBg: '#0a1119', tooltipBody: '#c7d6e5' }
+    : { tick: '#5a7a96', grid: '#e8eef5', tooltipBg: '#1a2a3a', tooltipBody: '#d0dce8' };
+}
+
 function makeChart(id, type, labels, datasets) {
   const ctx = document.getElementById(id); if (!ctx) return null;
+  const cores = obterCoresGrafico();
   return new Chart(ctx, { type, data: { labels, datasets }, options: {
     responsive: true, maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1a2a3a', titleColor: '#fff', bodyColor: '#d0dce8' } },
-    scales: { x: { ticks: { color: '#5a7a96', font: { family: 'Inter', size: 11 } }, grid: { color: '#e8eef5' } }, y: { ticks: { color: '#5a7a96', font: { family: 'Inter', size: 11 } }, grid: { color: '#e8eef5' } } }
+    plugins: { legend: { display: false }, tooltip: { backgroundColor: cores.tooltipBg, titleColor: '#fff', bodyColor: cores.tooltipBody } },
+    scales: { x: { ticks: { color: cores.tick, font: { family: 'Inter', size: 11 } }, grid: { color: cores.grid } }, y: { ticks: { color: cores.tick, font: { family: 'Inter', size: 11 } }, grid: { color: cores.grid } } }
   }});
 }
 
@@ -463,6 +500,39 @@ function renderDataFreshness(dtExtracao) {
   const { texto, cls } = calcFreshness(dtExtracao);
   badge.className = 'header-data-badge' + (cls ? ' ' + cls : '');
   badge.innerHTML = `<span class="dot"></span> ${texto}`;
+}
+
+function aplicarTema(tema) {
+  if (tema === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+  }
+  const btn = document.getElementById('theme-toggle');
+  if (btn) btn.textContent = tema === 'dark' ? '☀️' : '🌙';
+}
+
+function toggleTheme() {
+  const atual = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  const novo = atual === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('robo-rfid-theme', novo); } catch (e) {}
+  aplicarTema(novo);
+  // Recria os gráficos já desenhados pra refletir as novas cores do tema (Chart.js não
+  // atualiza sozinho as cores fixadas na criação).
+  if (dadosGeral.length) renderGraficosFiltrados();
+  if (chartCliEvasao || chartCliFin) {
+    const cliente = document.getElementById('select-cliente').value;
+    if (cliente) {
+      const dados = dadosCliente.filter(d => d['Cliente'] === cliente).sort((a,b) => a['Ano-Mês'].localeCompare(b['Ano-Mês']));
+      if (dados.length) {
+        const labels = dados.map(d => fmtMes(d['Ano-Mês']));
+        if (chartCliEvasao) chartCliEvasao.destroy();
+        chartCliEvasao = makeChart('chart-cli-evasao', 'line', labels, [{ data: dados.map(d => toNum(d['% Evasão'])), borderColor: '#1a6fb5', backgroundColor: 'rgba(26,111,181,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#1a6fb5', pointRadius: 5 }]);
+        if (chartCliFin) chartCliFin.destroy();
+        chartCliFin = makeChart('chart-cli-fin', 'bar', labels, [{ data: dados.map(d => toNum(d['Perda Financeira (R$)'])), backgroundColor: 'rgba(245,166,35,0.8)', borderColor: '#f5a623', borderWidth: 1, borderRadius: 6 }]);
+      }
+    }
+  }
 }
 
 function renderClienteFreshness(cliente) {
@@ -1002,6 +1072,7 @@ async function init() {
     document.getElementById('loading').innerHTML = `<div style="color:#e53935;font-family:Montserrat;font-size:14px;font-weight:700;letter-spacing:2px">ERRO AO CARREGAR DADOS</div><div style="color:#5a7a96;font-size:12px;margin-top:8px">${e.message}</div>`;
   }
 }
+aplicarTema(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
 init();
 </script>
 </body>
