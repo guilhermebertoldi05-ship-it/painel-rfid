@@ -195,6 +195,33 @@
   .setor-nav-info { flex: 1; text-align: center; min-width: 0; }
   .setor-nav-nome { font-family: 'Montserrat', sans-serif; font-size: 13px; font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 0.3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .setor-nav-meta { font-size: 10px; color: var(--text-muted); font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 3px; }
+  .semana-wrap table th.col-media, .semana-wrap table td.col-media { border-left: 2px solid var(--border); background: var(--surface2); }
+  .semana-wrap table th.col-media { background: var(--blue-dark); }
+  .combo { position: relative; min-width: 320px; flex: 1; max-width: 520px; }
+  .combo-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 34px 8px 14px; outline: none; transition: border-color 0.2s; }
+  .combo-input:focus { border-color: var(--blue); }
+  .combo-caret { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 11px; pointer-events: none; }
+  .combo-panel { display: none; position: absolute; z-index: 40; top: calc(100% + 4px); left: 0; right: 0; max-height: 320px; overflow-y: auto; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow-md); }
+  .combo-panel.open { display: block; }
+  .combo-opt { padding: 9px 14px; font-size: 12.5px; font-weight: 500; color: var(--text); cursor: pointer; border-bottom: 1px solid var(--border); }
+  .combo-opt:last-child { border-bottom: none; }
+  .combo-opt:hover, .combo-opt.marcada { background: var(--blue-light); color: var(--blue); }
+  .combo-opt.selecionada { font-weight: 700; }
+  .combo-vazio { padding: 14px; font-size: 12px; color: var(--text-muted); text-align: center; }
+  .busca-wrap { position: relative; min-width: 280px; flex: 1; max-width: 460px; }
+  .busca-input { width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500; padding: 8px 14px; outline: none; transition: border-color 0.2s; }
+  .busca-input:focus { border-color: var(--blue); }
+  .chips-wrap { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .chip { display: inline-flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 100px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-muted); font-family: 'Montserrat', sans-serif; font-size: 10px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase; cursor: pointer; transition: all 0.15s; }
+  .chip:hover { border-color: var(--blue); color: var(--blue); }
+  .chip .chip-box { width: 13px; height: 13px; border-radius: 4px; border: 1.5px solid currentColor; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 9px; line-height: 1; }
+  .chip.ativo { background: var(--blue-light); border-color: var(--blue); color: var(--blue); }
+  .chip.ativo .chip-box { background: var(--blue); border-color: var(--blue); color: #fff; }
+  .chip-limpar { background: transparent; border: none; color: var(--text-muted); font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; text-decoration: underline; cursor: pointer; padding: 4px; }
+  .chip-limpar:hover { color: var(--red); }
+  .rondas-filtros { display: flex; flex-direction: column; gap: 12px; margin-bottom: 20px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; box-shadow: var(--shadow); }
+  .rondas-filtros-linha { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  .rondas-contador { font-size: 11px; color: var(--text-muted); font-weight: 600; margin-left: auto; white-space: nowrap; }
   @media (max-width: 768px) {
     header { padding: 0 20px; } .tabs { padding: 0 20px; } main { padding: 20px; }
     .cards-grid { grid-template-columns: 1fr; } .charts-row { grid-template-columns: 1fr; } .client-detail { grid-template-columns: repeat(2, 1fr); }
@@ -290,7 +317,12 @@
   <div id="por-cliente" class="tab-content">
     <div class="filter-bar">
       <span class="filter-label">Cliente</span>
-      <select id="select-cliente" onchange="renderCliente()"><option value="">Selecione um cliente...</option></select>
+      <div class="combo" id="combo-cliente">
+        <input type="text" class="combo-input" id="combo-cliente-input" placeholder="Selecione ou pesquise um cliente..." autocomplete="off" role="combobox" aria-expanded="false" aria-controls="combo-cliente-panel">
+        <span class="combo-caret">▼</span>
+        <div class="combo-panel" id="combo-cliente-panel" role="listbox"></div>
+      </div>
+      <select id="select-cliente" onchange="renderCliente()" style="display:none"><option value="">Selecione um cliente...</option></select>
       <div class="header-data-badge" id="cliente-freshness" style="margin-left:auto"><span class="dot"></span> Carregando...</div>
     </div>
     <div class="client-detail" id="client-cards"></div>
@@ -367,9 +399,26 @@
 
   <div id="rondas" class="tab-content">
     <div id="mes-ronda-indicator" class="mes-indicator"><span></span> Período de referência: carregando...</div>
+    <div class="rondas-filtros">
+      <div class="rondas-filtros-linha">
+        <span class="filter-label">Buscar</span>
+        <div class="busca-wrap">
+          <input type="text" class="busca-input" id="rondas-busca" placeholder="Digite o nome do cliente..." autocomplete="off" oninput="renderRondas()">
+        </div>
+        <button class="btn-expandir" id="btn-filtros-equip" onclick="toggleFiltrosEquip()">Filtros</button>
+        <span class="rondas-contador" id="rondas-contador"></span>
+      </div>
+      <div class="curtain" id="filtros-equip-wrap">
+        <div class="rondas-filtros-linha" style="padding-top:4px">
+          <span class="filter-label">Equipamentos</span>
+          <div class="chips-wrap" id="chips-equip"></div>
+          <button class="chip-limpar" onclick="limparFiltrosEquip()">Limpar</button>
+        </div>
+      </div>
+    </div>
     <div class="table-wrap">
       <table>
-        <thead><tr><th>Cliente</th><th>Última Ronda</th><th>Eficiência</th><th>Dias sem Ronda</th><th>Situação</th></tr></thead>
+        <thead><tr><th>Cliente</th><th>Equipamentos</th><th>Última Ronda</th><th>Eficiência</th><th>Dias sem Ronda</th><th>Situação</th></tr></thead>
         <tbody id="rondas-tbody"></tbody>
       </table>
     </div>
@@ -380,6 +429,60 @@
 const SHEET_ID = '2PACX-1vTU9hUjM3qXPi08-gAAlnuOBqPtABLmrYJaJ1TrOx8J12YFoqdJXGukVptHxxqd84prEoeVTCNejfUy';
 const GIDS = { 'Visão_Geral': '211713039', 'Por_Cliente': '1630187568', 'Rondas': '1562548530', 'Rondas_Semana': '329455742', 'Mesa_Semana': '1202421037', 'Pecas_Geral': '959213890', 'Pecas_Setor': '1154061757', 'Pecas_Geral_Full': '1397665532', 'Pecas_Setor_Full': '790047622' };
 const BASE_URL = `https://docs.google.com/spreadsheets/d/e/${SHEET_ID}/pub?output=csv&gid=`;
+
+// Equipamentos por cliente, chaveado pelo ID numérico que vem entre parênteses no nome
+// (ex.: "ANDARAI (10117)" → 10117). Usa o ID e não o nome porque o sistema de origem já
+// renomeou cliente sem trocar o ID. Dado estático, mantido à mão — o robô não coleta isso.
+const EQUIPAMENTOS = {
+  '1': ['portal','pistola','mesa'],      // PBBY
+  '2': ['portal','pistola','mesa'],      // CPL
+  '5': [],                               // CENTRO HOSPITALAR SAO LUCAS
+  '6': ['portal','pistola','mesa'],      // HMRG - RONALDO GAZOLLA
+  '48': [],                              // NIG
+  '53': [],                              // CLINICA SÃO SILVESTRE
+  '64': ['portal','pistola','mesa'],     // SPDM - HOSPITAL MUNICIPAL PEDRO II
+  '67': [],                              // HCPM RIO
+  '68': [],                              // HPM NIT
+  '69': [],                              // HON - Hospital dos Olhos Niterói
+  '103': ['portal','pistola','mesa'],    // GRAFFE
+  '10103': ['portal','pistola','mesa'],  // INC
+  '10105': [],                           // GNOSIS - CENTRO CARIOCA DE DIAGNÓSTICO
+  '10110': ['portal','pistola','mesa'],  // HUCFF
+  '10111': ['portal','pistola','mesa'],  // Maternidade Escola
+  '10112': ['portal','pistola','mesa'],  // IPPMG
+  '10113': ['portal','pistola','mesa'],  // HUPE NOVO
+  '10114': ['pistola'],                  // PPC NOVO
+  '10117': ['portal','pistola','mesa'],  // ANDARAI
+  '10119': ['portal','pistola','mesa'],  // PMN - Maternidade Alzira Reis
+  '10120': ['portal','pistola','mesa'],  // PMN - HOF
+  '10121': [],                           // PMN - HPJ
+  '10122': [],                           // PMN - SAMU - BASE
+  '10123': [],                           // PMN - SPA 1
+  '10124': [],                           // PMN - SPA-2
+  '10126': [],                           // FeSaúde - UAA Centro
+  '10127': [],                           // FeSaúde - CAPS AD III
+  '10130': ['pistola','mesa'],           // HOSPITAL DAS CLÍNICAS DE NOVA IGUAÇU (portal a instalar)
+  '10132': ['portal','pistola','mesa'],  // HOSPITAL UNIMED NOVA FRIBURGO
+  '10133': ['mesa'],                     // HOSPITAL TEREZINHA DE JESUS
+  '10134': ['portal','pistola','mesa'],  // Hospital Central Aristarcho Pessoa - HCAP
+  '10136': ['portal','pistola','mesa'],  // HOSPITAL SÃO MATHEUS
+  '10137': ['portal','pistola','mesa'],  // HOSPITAL MUNICIPAL JAPUIBA
+  '10138': ['portal','pistola','mesa'],  // HOSPITAL ISRAELITA ALBERT SABIN
+  '10141': ['portal','pistola','mesa'],  // IGEDES - Hospital da Mulher Fernando Magalhães
+  '10143': ['portal','pistola','mesa'],  // HOSPITAL MATERNIDADE ALEXANDER FLEMING
+  '10144': [],                           // ANGRA POOL
+  '10145': [],                           // Mercure
+  '10247': [],                           // Novotel Berrini
+};
+const EQUIP_LABELS = { portal: 'Portal', pistola: 'Pistola', mesa: 'Mesa RFID', nenhum: 'Sem equipamento' };
+let filtrosEquip = new Set();
+
+// Devolve null (e não []) para cliente fora do mapa, pra não confundir "cliente novo, ainda
+// não mapeado" com "cliente sem nenhum equipamento".
+function equipamentosDoCliente(nomeCliente) {
+  const m = String(nomeCliente || '').match(/\((\d+)\)\s*$/);
+  return m && EQUIPAMENTOS[m[1]] ? EQUIPAMENTOS[m[1]] : (m && EQUIPAMENTOS.hasOwnProperty(m[1]) ? [] : null);
+}
 
 let dadosGeral = [], dadosCliente = [], dadosRondas = [], dadosRondasSemana = [], dadosMesaSemana = [];
 let dadosPecasGeralParsed = [], dadosPecasSetorParsed = [];
@@ -489,9 +592,12 @@ function calcFreshness(dtExtracao) {
   const horaTxt = String(dtExtracao.getHours()).padStart(2, '0') + ':' + String(dtExtracao.getMinutes()).padStart(2, '0');
   const diaTxt = String(dtExtracao.getDate()).padStart(2, '0') + '/' + String(dtExtracao.getMonth() + 1).padStart(2, '0');
 
-  if (diffHoras < 12) return { texto: `Atualizado hoje às ${horaTxt}`, cls: '' };
-  if (diffDias < 2) return { texto: `Atualizado ontem às ${horaTxt}`, cls: 'stale' };
-  if (diffDias < 7) return { texto: `Atualizado em ${diaTxt} às ${horaTxt}`, cls: 'very-stale' };
+  // Verde até 24h, amarelo entre 24h e 72h, vermelho acima de 72h.
+  const mesmoDia = dtExtracao.toDateString() === agora.toDateString();
+  if (diffHoras < 24) {
+    return { texto: `Atualizado ${mesmoDia ? 'hoje' : 'ontem'} às ${horaTxt}`, cls: '' };
+  }
+  if (diffHoras < 72) return { texto: `Atualizado em ${diaTxt} às ${horaTxt}`, cls: 'stale' };
   return { texto: `Desatualizado — ${diffDias} dias sem rodar`, cls: 'very-stale' };
 }
 
@@ -527,7 +633,7 @@ function toggleTheme() {
       if (dados.length) {
         const labels = dados.map(d => fmtMes(d['Ano-Mês']));
         if (chartCliEvasao) chartCliEvasao.destroy();
-        chartCliEvasao = makeChart('chart-cli-evasao', 'line', labels, [{ data: dados.map(d => toNum(d['% Evasão'])), borderColor: '#1a6fb5', backgroundColor: 'rgba(26,111,181,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#1a6fb5', pointRadius: 5 }]);
+        chartCliEvasao = makeChart('chart-cli-evasao', 'line', labels, [{ data: dados.map(d => toNum(d['% Evasão'])), borderColor: '#e53935', backgroundColor: 'rgba(229,57,53,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#e53935', pointRadius: 5 }]);
         if (chartCliFin) chartCliFin.destroy();
         chartCliFin = makeChart('chart-cli-fin', 'bar', labels, [{ data: dados.map(d => toNum(d['Perda Financeira (R$)'])), backgroundColor: 'rgba(245,166,35,0.8)', borderColor: '#f5a623', borderWidth: 1, borderRadius: 6 }]);
       }
@@ -621,7 +727,7 @@ function renderGraficosFiltrados() {
   const janela = dadosGeral.slice(inicio, idxSel + 1);
   const labels = janela.map(d => fmtMes(d['Mês']));
   if (chartEvasao) chartEvasao.destroy();
-  chartEvasao = makeChart('chart-evasao', 'line', labels, [{ data: janela.map(d => toNum(d['% Evasão Média'])), borderColor: '#1a6fb5', backgroundColor: 'rgba(26,111,181,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#1a6fb5', pointRadius: 5 }]);
+  chartEvasao = makeChart('chart-evasao', 'line', labels, [{ data: janela.map(d => toNum(d['% Evasão Média'])), borderColor: '#e53935', backgroundColor: 'rgba(229,57,53,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#e53935', pointRadius: 5 }]);
   if (chartFin) chartFin.destroy();
   chartFin = makeChart('chart-financeiro', 'bar', labels, [{ data: janela.map(d => toNum(d['Total Perda Financeira (R$)'])), backgroundColor: 'rgba(245,166,35,0.8)', borderColor: '#f5a623', borderWidth: 1, borderRadius: 6 }]);
   if (chartPecas) chartPecas.destroy();
@@ -715,11 +821,93 @@ function toggleVerTudoPecasMenos() {
   btn.textContent = abrir ? 'Ver menos' : 'Ver tudo';
 }
 
+let comboClientes = [], comboMarcado = -1;
+
 function renderSelectCliente() {
   const sel = document.getElementById('select-cliente');
-  const clientes = [...new Set(dadosCliente.map(d => d['Cliente']))].sort();
-  clientes.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.textContent = c; sel.appendChild(opt); });
-  if (clientes.length) { sel.value = clientes[0]; renderCliente(); }
+  comboClientes = [...new Set(dadosCliente.map(d => d['Cliente']))].sort();
+  comboClientes.forEach(c => { const opt = document.createElement('option'); opt.value = c; opt.textContent = c; sel.appendChild(opt); });
+  if (comboClientes.length) {
+    sel.value = comboClientes[0];
+    document.getElementById('combo-cliente-input').value = comboClientes[0];
+    renderCliente();
+  }
+}
+
+function normalizar(s) {
+  return String(s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function comboFiltrados() {
+  const input = document.getElementById('combo-cliente-input');
+  const selecionado = document.getElementById('select-cliente').value;
+  // Enquanto o texto ainda for exatamente o cliente selecionado, o usuário não digitou uma
+  // busca — mostra a lista inteira em vez de filtrar por ele mesmo.
+  const termo = input.value === selecionado ? '' : normalizar(input.value);
+  if (!termo) return comboClientes;
+  return comboClientes.filter(c => normalizar(c).includes(termo));
+}
+
+function renderComboPanel() {
+  const panel = document.getElementById('combo-cliente-panel');
+  const selecionado = document.getElementById('select-cliente').value;
+  const lista = comboFiltrados();
+  if (!lista.length) {
+    panel.innerHTML = '<div class="combo-vazio">Nenhum cliente encontrado</div>';
+    return;
+  }
+  panel.innerHTML = lista.map((c, i) =>
+    `<div class="combo-opt${c === selecionado ? ' selecionada' : ''}${i === comboMarcado ? ' marcada' : ''}" role="option" data-cliente="${c.replace(/"/g, '&quot;')}">${c}</div>`
+  ).join('');
+  panel.querySelectorAll('.combo-opt').forEach(el => {
+    el.addEventListener('mousedown', ev => { ev.preventDefault(); escolherCliente(el.dataset.cliente); });
+  });
+}
+
+function abrirCombo() {
+  comboMarcado = -1;
+  renderComboPanel();
+  document.getElementById('combo-cliente-panel').classList.add('open');
+  document.getElementById('combo-cliente-input').setAttribute('aria-expanded', 'true');
+}
+
+function fecharCombo() {
+  document.getElementById('combo-cliente-panel').classList.remove('open');
+  document.getElementById('combo-cliente-input').setAttribute('aria-expanded', 'false');
+  // Se o usuário digitou e não escolheu nada, devolve o texto pro cliente que está de fato ativo.
+  document.getElementById('combo-cliente-input').value = document.getElementById('select-cliente').value;
+}
+
+function escolherCliente(cliente) {
+  document.getElementById('select-cliente').value = cliente;
+  document.getElementById('combo-cliente-input').value = cliente;
+  fecharCombo();
+  renderCliente();
+}
+
+function initComboCliente() {
+  const input = document.getElementById('combo-cliente-input');
+  const panel = document.getElementById('combo-cliente-panel');
+  input.addEventListener('focus', abrirCombo);
+  input.addEventListener('input', () => { comboMarcado = -1; renderComboPanel(); panel.classList.add('open'); });
+  input.addEventListener('blur', fecharCombo);
+  input.addEventListener('keydown', ev => {
+    const lista = comboFiltrados();
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+      ev.preventDefault();
+      if (!panel.classList.contains('open')) { abrirCombo(); return; }
+      comboMarcado = Math.max(0, Math.min(comboMarcado + (ev.key === 'ArrowDown' ? 1 : -1), lista.length - 1));
+      renderComboPanel();
+      const marcada = panel.querySelector('.combo-opt.marcada');
+      if (marcada) marcada.scrollIntoView({ block: 'nearest' });
+    } else if (ev.key === 'Enter') {
+      ev.preventDefault();
+      const alvo = comboMarcado >= 0 ? lista[comboMarcado] : lista[0];
+      if (alvo) escolherCliente(alvo);
+    } else if (ev.key === 'Escape') {
+      input.blur();
+    }
+  });
 }
 
 function renderCliente() {
@@ -766,7 +954,7 @@ function renderCliente() {
   renderMesaSemanaCliente(cliente);
   renderPecasCliente(cliente);
   if (chartCliEvasao) chartCliEvasao.destroy();
-  chartCliEvasao = makeChart('chart-cli-evasao', 'line', labels, [{ data: dados.map(d => toNum(d['% Evasão'])), borderColor: '#1a6fb5', backgroundColor: 'rgba(26,111,181,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#1a6fb5', pointRadius: 5 }]);
+  chartCliEvasao = makeChart('chart-cli-evasao', 'line', labels, [{ data: dados.map(d => toNum(d['% Evasão'])), borderColor: '#e53935', backgroundColor: 'rgba(229,57,53,0.08)', tension: 0.4, fill: true, pointBackgroundColor: '#e53935', pointRadius: 5 }]);
   if (chartCliFin) chartCliFin.destroy();
   chartCliFin = makeChart('chart-cli-fin', 'bar', labels, [{ data: dados.map(d => toNum(d['Perda Financeira (R$)'])), backgroundColor: 'rgba(245,166,35,0.8)', borderColor: '#f5a623', borderWidth: 1, borderRadius: 6 }]);
   document.getElementById('client-tbody').innerHTML = dados.slice().reverse().map(d => {
@@ -936,48 +1124,55 @@ function switchSetor(idx, btn) {
   if (el) el.classList.add('active');
 }
 
-function renderRondasSemanaCliente(cliente) {
-  if (!dadosRondasSemana.length) return;
-  const row = dadosRondasSemana.find(d => d['Cliente'] === cliente);
-  const header = document.getElementById('semana-header');
-  const tbody = document.getElementById('semana-tbody');
+// Média dos dias da semana com leitura numérica. "S/ Equip" e células vazias ficam de fora;
+// 0.0% entra na conta (é um dia ruim de verdade, não ausência de dado).
+function mediaSemana(row, colunas) {
+  const valores = colunas.map(d => {
+    const m = String(row[d] || '').match(/^([\d.]+)%/);
+    return m ? parseFloat(m[1]) : null;
+  }).filter(v => v !== null);
+  if (!valores.length) return null;
+  return valores.reduce((a, b) => a + b, 0) / valores.length;
+}
+
+function celulaMediaSemana(row, colunas) {
+  const media = mediaSemana(row, colunas);
+  if (media === null) {
+    const semEquip = colunas.some(d => row[d] === 'S/ Equip');
+    return `<td class="col-media"><span class="efic-dia-vazio">${semEquip ? 'S/ Equip' : '—'}</span></td>`;
+  }
+  const cls = media <= 40 ? 'efic-dia-vermelho' : media <= 60 ? 'efic-dia-laranja' : media <= 80 ? 'efic-dia-amarelo' : 'efic-dia-verde';
+  return `<td class="col-media"><span class="${cls}">${media.toFixed(1).replace('.', ',')}%</span></td>`;
+}
+
+function renderTabelaSemana(dados, cliente, headerId, tbodyId) {
+  if (!dados.length) return;
+  const row = dados.find(d => d['Cliente'] === cliente);
+  const header = document.getElementById(headerId);
+  const tbody = document.getElementById(tbodyId);
   if (!header || !tbody) return;
-  const colunas = Object.keys(dadosRondasSemana[0]).filter(k => k !== 'Cliente');
+  const colunas = Object.keys(dados[0]).filter(k => k !== 'Cliente');
   header.innerHTML = '<th style="text-align:left">Cliente</th>' + colunas.map(d => {
     const dia = diaSemana(d); const dd = d.substring(0,5);
     return `<th>${dia}<br><span style="font-weight:500;opacity:0.8;font-size:9px">${dd}</span></th>`;
-  }).join('');
+  }).join('') + '<th class="col-media">Média<br><span style="font-weight:500;opacity:0.8;font-size:9px">da semana</span></th>';
   if (!row) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sem dados semanais para este cliente</td></tr>';
+    tbody.innerHTML = `<tr><td colspan="${colunas.length + 2}" class="empty-state">Sem dados semanais para este cliente</td></tr>`;
     return;
   }
   const cells = colunas.map(d => {
     const val = row[d] || '-'; const cls = corEficDia(val);
     return `<td><span class="${cls}">${val === '-' ? '—' : val}</span></td>`;
   }).join('');
-  tbody.innerHTML = `<tr><td style="text-align:left"><strong>${row['Cliente']}</strong></td>${cells}</tr>`;
+  tbody.innerHTML = `<tr><td style="text-align:left"><strong>${row['Cliente']}</strong></td>${cells}${celulaMediaSemana(row, colunas)}</tr>`;
+}
+
+function renderRondasSemanaCliente(cliente) {
+  renderTabelaSemana(dadosRondasSemana, cliente, 'semana-header', 'semana-tbody');
 }
 
 function renderMesaSemanaCliente(cliente) {
-  if (!dadosMesaSemana.length) return;
-  const row = dadosMesaSemana.find(d => d['Cliente'] === cliente);
-  const header = document.getElementById('mesa-header');
-  const tbody = document.getElementById('mesa-tbody');
-  if (!header || !tbody) return;
-  const colunas = Object.keys(dadosMesaSemana[0]).filter(k => k !== 'Cliente');
-  header.innerHTML = '<th style="text-align:left">Cliente</th>' + colunas.map(d => {
-    const dia = diaSemana(d); const dd = d.substring(0,5);
-    return `<th>${dia}<br><span style="font-weight:500;opacity:0.8;font-size:9px">${dd}</span></th>`;
-  }).join('');
-  if (!row) {
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-state">Sem dados semanais para este cliente</td></tr>';
-    return;
-  }
-  const cells = colunas.map(d => {
-    const val = row[d] || '-'; const cls = corEficDia(val);
-    return `<td><span class="${cls}">${val === '-' ? '—' : val}</span></td>`;
-  }).join('');
-  tbody.innerHTML = `<tr><td style="text-align:left"><strong>${row['Cliente']}</strong></td>${cells}</tr>`;
+  renderTabelaSemana(dadosMesaSemana, cliente, 'mesa-header', 'mesa-tbody');
 }
 
 function corEficDia(val) {
@@ -999,14 +1194,65 @@ function diaSemana(dataStr) {
   return ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'][dt.getDay()];
 }
 
+function renderChipsEquip() {
+  const wrap = document.getElementById('chips-equip');
+  if (!wrap) return;
+  wrap.innerHTML = ['portal','pistola','mesa','nenhum'].map(k =>
+    `<button class="chip${filtrosEquip.has(k) ? ' ativo' : ''}" data-equip="${k}" onclick="toggleChipEquip('${k}')">
+      <span class="chip-box">${filtrosEquip.has(k) ? '✓' : ''}</span>${EQUIP_LABELS[k]}
+    </button>`).join('');
+}
+
+function toggleChipEquip(k) {
+  if (filtrosEquip.has(k)) filtrosEquip.delete(k); else filtrosEquip.add(k);
+  renderChipsEquip();
+  renderRondas();
+}
+
+function limparFiltrosEquip() {
+  filtrosEquip.clear();
+  renderChipsEquip();
+  renderRondas();
+}
+
+function toggleFiltrosEquip() {
+  const el = document.getElementById('filtros-equip-wrap');
+  const btn = document.getElementById('btn-filtros-equip');
+  const abrir = !el.classList.contains('open');
+  el.classList.toggle('open', abrir);
+  btn.textContent = abrir ? 'Ocultar filtros' : 'Filtros';
+}
+
+// Chip marcado = "tem esse equipamento". Vários chips somam por OU (cliente aparece se tiver
+// pelo menos um dos marcados). O chip "nenhum" casa com quem não tem equipamento algum.
+function passaFiltroEquip(nomeCliente) {
+  if (!filtrosEquip.size) return true;
+  const equips = equipamentosDoCliente(nomeCliente);
+  if (equips === null) return false;
+  if (filtrosEquip.has('nenhum') && !equips.length) return true;
+  return equips.some(e => filtrosEquip.has(e));
+}
+
 function renderRondas() {
   const meses = [...new Set(dadosRondas.map(d => d['Ano-Mês']))].sort();
   const mesAtual = meses[meses.length - 1];
   const indicador = document.getElementById('mes-ronda-indicator');
   if (mesAtual) indicador.innerHTML = `<span></span> Período de referência: ${fmtMes(mesAtual)}`;
-  const dados = dadosRondas.filter(d => d['Ano-Mês'] === mesAtual).sort((a,b) => toNum(b['Dias de Atraso (Núm)']) - toNum(a['Dias de Atraso (Núm)']));
+  const doMes = dadosRondas.filter(d => d['Ano-Mês'] === mesAtual);
+  const buscaEl = document.getElementById('rondas-busca');
+  const termo = normalizar(buscaEl ? buscaEl.value : '');
+  const dados = doMes
+    .filter(d => passaFiltroEquip(d['Cliente']))
+    .filter(d => !termo || normalizar(d['Cliente']).includes(termo))
+    .sort((a,b) => toNum(b['Dias de Atraso (Núm)']) - toNum(a['Dias de Atraso (Núm)']));
+  const contador = document.getElementById('rondas-contador');
+  if (contador) {
+    contador.textContent = dados.length === doMes.length
+      ? `${doMes.length} clientes`
+      : `${dados.length} de ${doMes.length} clientes`;
+  }
   const tbody = document.getElementById('rondas-tbody');
-  if (!dados.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhum dado encontrado</td></tr>'; return; }
+  if (!dados.length) { tbody.innerHTML = '<tr><td colspan="6" class="empty-state">Nenhum cliente corresponde aos filtros</td></tr>'; return; }
   tbody.innerHTML = dados.map(d => {
     const dias = toNum(d['Dias de Atraso (Núm)']);
     const efic = toNum(d['% Eficiência (Núm)']);
@@ -1024,7 +1270,12 @@ function renderRondas() {
     const diasTexto = dias >= 60 ? '+60 dias' : `${dias} dias`;
     const situacao = badgeSituacao(dias);
     const corEfic = corEficiencia(efic);
-    return `<tr><td><strong>${d['Cliente']}</strong></td><td style="font-size:13px">${statusFormatado}</td><td><span class="${corEfic}">${d['Eficiência da Ronda']||'-'}</span></td><td><strong>${diasTexto}</strong></td><td><span class="badge ${situacao.cls}">${situacao.label}</span></td></tr>`;
+    const equips = equipamentosDoCliente(d['Cliente']);
+    let equipHtml;
+    if (equips === null) equipHtml = '<span class="badge badge-gray">Não mapeado</span>';
+    else if (!equips.length) equipHtml = '<span class="badge badge-gray">Nenhum</span>';
+    else equipHtml = equips.map(e => `<span class="badge badge-blue">${EQUIP_LABELS[e]}</span>`).join(' ');
+    return `<tr><td><strong>${d['Cliente']}</strong></td><td><div style="display:flex;gap:4px;flex-wrap:wrap;justify-content:center">${equipHtml}</div></td><td style="font-size:13px">${statusFormatado}</td><td><span class="${corEfic}">${d['Eficiência da Ronda']||'-'}</span></td><td><strong>${diasTexto}</strong></td><td><span class="badge ${situacao.cls}">${situacao.label}</span></td></tr>`;
   }).join('');
 }
 
@@ -1066,6 +1317,8 @@ async function init() {
     renderRankings();
     renderRankingsPositivos();
     renderSelectCliente();
+    initComboCliente();
+    renderChipsEquip();
     renderRondas();
     document.getElementById('loading').style.display = 'none';
   } catch(e) {
